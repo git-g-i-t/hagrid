@@ -1,0 +1,19 @@
+# 忽略指定的文件夹
+work_dir/
+dataset_mini/
+annotations_mini/
+
+# 可选：忽略常见的Python缓存和临时文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+.venv
+
+# 模型文件和大文件（如果有的话）
+*.pth
+*.pt
+*.h5
+*.model

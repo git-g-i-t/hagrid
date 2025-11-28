@@ -1,0 +1,169 @@
+# ==========================================
+# MobileNetV3_large 
+# 定位：在速度和精度之间寻找平衡。它的精度通常接近 ResNet-50，但速度快得多
+# 结构：层数更多，通道数更多（参数量大约是 Small 的 2-3 倍）。
+# 对比 Small：精度更高，速度稍慢，适合现代移动端设备
+# SSDLiteMobileNetV3Large.yaml 中检测模型就是用这个 Large 版本作为骨干网（Backbone）来提取特征的，因为检测任务比单纯分类更难，需要 Large 版提供更强的特征表达能力
+# ==========================================
+#Exp params
+epochs: 100
+log_every: 100 # Log every n iterations
+eval_every: 1 # Eval and save every n epochs
+test_every: 0 # Test every n epochs
+experiment_name: MobileNetV3_large
+work_dir: work_dir
+
+# Stop training conditions
+early_stopping:
+    epochs: 10
+    metric: 0.01
+
+
+# Dataset configuration
+dataset:
+    annotations_train: <path_to_json_train>
+    annotations_val: <path_to_json_val>
+    annotations_test: <path_to_json_test>
+
+    dataset_train: <path_to_dataset_folder>
+    dataset_val: <path_to_dataset_folder>
+    dataset_test: <path_to_dataset_folder>
+
+    img_size: &img_size 224 # Image size for training, must be square
+    img_mean: &img_mean [0.54, 0.499, 0.474]
+    img_std: &img_std [0.234, 0.235, 0.231]
+    subset: -1 # Amount of training data
+
+    one_class: False
+
+    targets:
+        - grabbing
+        - grip
+        - holy
+        - point
+        - call
+        - three3
+        - timeout
+        - xsign
+        - hand_heart
+        - hand_heart2
+        - little_finger
+        - middle_finger
+        - take_picture
+        - dislike
+        - fist
+        - four
+        - like
+        - mute
+        - ok
+        - one
+        - palm
+        - peace
+        - peace_inverted
+        - rock
+        - stop
+        - stop_inverted
+        - three
+        - three2
+        - two_up
+        - two_up_inverted
+        - three_gun
+        - thumb_index
+        - thumb_index2
+        - no_gesture
+
+# Transform and augmentation pipeline. See https://albumentations.ai/docs/ for using
+train_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+val_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+test_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# --- 模型参数 (❌ 关键区别) ---
+model:
+    name: MobileNetV3_large   # 指定使用 Large 版本的网络结构
+                              # 包含更多层和更宽的通道，参数量约为 Small 的两倍
+    pretrained: False
+    pretrained_backbone: False
+    checkpoint: null
+
+# ---  优化器  ---
+# 注意：Large 版本依然沿用了和 Small 版本一样的 0.005 学习率
+# 这说明 MobileNetV3 系列对学习率的敏感度比较一致
+optimizer:
+    name: SGD
+    params:
+        lr: 0.005
+        momentum: 0.9
+        weight_decay: 0.0005
+
+scheduler:
+    name: StepLR
+    params:
+        step_size: 30
+        gamma: 0.1
+
+criterion: CrossEntropyLoss
+
+
+# --- 数据加载参数 ---
+# ✅ 这里是 16，比 Small 版本的 64 要安全且合理得多
+train_params:
+    num_workers: 16
+    shuffle: True
+    batch_size: 128
+    prefetch_factor: 3
+
+test_params:
+    num_workers: 16
+    shuffle: False
+    batch_size: 128
+    prefetch_factor: 3
+
+val_params:
+    num_workers: 16
+    shuffle: False
+    batch_size: 128
+    prefetch_factor: 3

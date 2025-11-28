@@ -1,0 +1,181 @@
+#Exp params
+# ==========================================
+# SSDLiteMobileNetV3Large 配置文件详解:
+# 任务类型：目标检测 (Object Detection)
+# 作用：定义训练流程、数据路径、预处理策略和模型参数
+# ==========================================
+
+# --- 1. 实验控制参数 (Experiment Params) ---
+# 训练的总轮数 (遍历一次全量数据集为一轮)
+epochs: 100
+# 日志打印频率：每训练 100 个 Batch 打印一次 Loss 等信息
+log_every: 100 
+# 验证频率：每 1 个 epoch 在验证集上跑一次评估，并保存模型
+eval_every: 1 
+# 测试频率：每 0 个 epoch 跑一次测试集 (0 表示训练过程中不跑测试集，通常只在最后跑)
+test_every: 0 
+# 实验名称：用于生成保存权重的文件夹名称，或 TensorBoard 的运行名称
+experiment_name: SSDLiteMobileNetV3Large
+# 工作目录：模型权重(.pth)和日志文件的保存根目录
+work_dir: work_dir
+
+# --- 2. 早停策略 (Early Stopping) ---
+# 防止过拟合或无效训练。如果模型性能不再提升，提前终止训练。
+early_stopping:
+    epochs: 10        # 耐心值 (Patience)：如果连续 10 个 epoch 指标没有提升，就停止
+    metric: 0.01      # 阈值：提升幅度如果小于 0.01，可能被视为没有提升
+
+
+
+# --- 3. 数据集配置 (Dataset Configuration) ---
+dataset:
+    # 标注文件路径 (JSON格式，通常是 COCO 格式)
+    # <path_to_...> 是占位符，你需要修改为实际的绝对路径或相对路径
+    annotations_train: <path_to_json_train>
+    annotations_val: <path_to_json_val>
+    annotations_test: <path_to_json_test>
+
+    # 图片文件夹路径
+    dataset_train: <path_to_dataset_folder>
+    dataset_val: <path_to_dataset_folder>
+    dataset_test: <path_to_dataset_folder>
+
+    # 图像尺寸定义
+    # '&img_size' 是 YAML 的锚点(Anchor)语法，后面可以用 '*img_size' 引用这个值，方便统一修改
+    img_size: &img_size 224        # 输入模型的图片大小，必须是正方形 (224x224)
+    
+    # 归一化参数 (通常使用 ImageNet 数据集的均值和标准差)
+    # 这里是直接设置好了
+    img_mean: &img_mean [0.54, 0.499, 0.474]
+    img_std: &img_std [0.234, 0.235, 0.231]
+    
+    # 数据量限制：-1 表示使用全部数据。如果填 100，则只用前 100 张图（用于快速调试代码）
+    subset: -1 # Amount of training data
+
+    # 是否为单类检测（例如只检测“有没有手”，不区分手势）
+    # False 表示多类检测，不仅要找出哪里有手，还要具体区分这个手势是 "Like"、"Stop"还是 "Peace"
+    # True 表示单类别检测，只关心“有没有手”这个问题
+    one_class: False
+
+    # 目标类别列表 (Targets)
+    # 这里列出了所有需要识别的手势。模型的输出层大小会根据这个列表长度自动调整。
+    # 注意：顺序很重要，对应模型输出的索引 (0, 1, 2...)
+    targets:
+        - grabbing
+        - grip
+        - holy
+        - point
+        - call
+        - three3
+        - timeout
+        - xsign
+        - hand_heart
+        - hand_heart2
+        - little_finger
+        - middle_finger
+        - take_picture
+        - dislike
+        - fist
+        - four
+        - like
+        - mute
+        - ok
+        - one
+        - palm
+        - peace
+        - peace_inverted
+        - rock
+        - stop
+        - stop_inverted
+        - three
+        - three2
+        - two_up
+        - two_up_inverted
+        - three_gun
+        - thumb_index
+        - thumb_index2
+        - no_gesture   # 这是一个特殊的类，通常表示“虽然有手但不是已知手势”
+
+
+
+# --- 4. 数据预处理与增强 (Transform Pipeline) ---
+# Transform and augmentation pipeline. See https://albumentations.ai/docs/ for using
+# 使用 Albumentations 库。
+# 逻辑：由于输入图片可能是 1920x1080 的长方形，但模型需要 224x224 的正方形。
+# 这里的策略是：先等比缩放长边，再给短边填充灰边 (Letterbox处理)。
+train_transforms:
+    LongestMaxSize:
+        max_size: *img_size   # 引用上面的 224。将长边缩放到 224，短边按比例缩放
+        p: 1                  # 概率为 1，表示一定会执行这个变换
+    PadIfNeeded:
+        min_height: *img_size # 224
+        min_width: *img_size  # 224
+        value: [144,144,144]  # 填充颜色为灰色 (RGB) 不足224的部分填上这个颜色
+        border_mode: 0
+        p: 1
+
+# 验证集预处理 (不进行随机翻转等增强，只做尺寸统一)
+val_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+
+# 测试集预处理 (同验证集)
+test_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+
+# --- 5. 模型参数 (Model Parameters) ---
+model:
+    name: SSDLiteMobileNetV3Large   # 模型名称
+    pretrained: False               # 是否使用预训练权重 
+    pretrained_backbone: False      # 是否加载骨干网络(MobileNet)的 ImageNet 预训练权重 训练时建议设为 True（？）小吴有话说：此处存疑，ai说的，我不懂这些
+    checkpoint: null                # 如果需要断点续训，这里填 .pth 文件的路径
+
+# --- 6. 优化器参数 (Optimizer) ---
+optimizer:
+    name: SGD                     # 优化器名称：随机梯度下降
+    params:
+        lr: 0.0001                # 学习率 (Learning Rate)
+        momentum: 0.9             # 动量因子
+        # weight_decay: 0.0005    # 权重衰减 (L2 正则化)，可选参数，这里被注释掉了
+        nesterov: True            # 是否使用 Nesterov 动量
+
+# --- 7. 学习率调度器 (Scheduler) ---
+scheduler:
+    name: null                    # 这里未启用。通常可以用 CosineAnnealing 或 StepLR 动态调整学习率
+
+# --- 8. 数据加载器参数 (DataLoader Params) ---
+# 训练数据加载配置
+train_params:
+    num_workers: 16            # CPU 线程数，用于并行读取和预处理图片 (根据电脑 CPU 核数调整)
+    shuffle: True              # 是否打乱数据顺序，训练时必须打乱数据顺序
+    batch_size: 128            # 每次喂给模型 128 张图 (根据显卡显存调整，爆显存就调小)
+    prefetch_factor: 3         # 每个 worker 预加载 3 个 batch
+
+# 测试数据加载配置
+test_params:
+    num_workers: 16
+    shuffle: False             # 测试时不需要打乱，方便对应结果
+    batch_size: 128
+    prefetch_factor: 3
+
+# 验证数据加载配置
+val_params:
+    num_workers: 16
+    shuffle: False
+    batch_size: 128
+    prefetch_factor: 3

@@ -1,0 +1,160 @@
+# 实验参数
+epochs: 50  # ⚠️ 减少训练轮数，先测试
+log_every: 50  # ⚠️ 减少日志频率
+eval_every: 2  # ⚠️ 每2个epoch验证一次
+test_every: 0
+experiment_name: ConvNeXt_base_CPU  # ⚠️ 改名以区分
+work_dir: work_dir
+
+# 早停设置
+early_stopping:
+    epochs: 5  # ⚠️ 减少早停耐心
+    metric: 0.01
+
+# 数据集配置
+dataset:
+    annotations_train: "annotations_mini/train"
+    annotations_val: "annotations_mini/val" 
+    annotations_test: "annotations_mini/test"
+
+    dataset_train: "dataset_mini/train"
+    dataset_val: "dataset_mini/val"
+    dataset_test: "dataset_mini/test"
+
+    img_size: &img_size 128  # ⚠️ 关键：减小图像尺寸
+    img_mean: &img_mean [0.54, 0.499, 0.474]
+    img_std: &img_std [0.234, 0.235, 0.231]
+    subset: 500  # ⚠️ 关键：使用数据子集
+
+    one_class: False
+
+    # 手势类别标签列表（保持原样）
+    targets:
+        - grabbing
+        - grip
+        - holy
+        - point
+        - call
+        - three3
+        - timeout
+        - xsign
+        - hand_heart
+        - hand_heart2
+        - little_finger
+        - middle_finger
+        - take_picture
+        - dislike
+        - fist
+        - four
+        - like
+        - mute
+        - ok
+        - one
+        - palm
+        - peace
+        - peace_inverted
+        - rock
+        - stop
+        - stop_inverted
+        - three
+        - three2
+        - two_up
+        - two_up_inverted
+        - three_gun
+        - thumb_index
+        - thumb_index2
+        - no_gesture
+
+# 训练数据增强（相应调整尺寸）
+train_transforms:
+    LongestMaxSize:
+        max_size: *img_size  # ⚠️ 使用新尺寸
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# 验证集数据变换
+val_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# 测试集数据变换
+test_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# 模型参数配置
+model:
+    name: ConvNeXt_base
+    pretrained: False
+    pretrained_backbone: False
+    checkpoint: null
+
+# 优化器配置
+optimizer:
+    name: AdamW
+    params:
+        lr: 0.001  # ⚠️ 减小学习率
+        weight_decay: 0.05
+        eps: 0.00000001
+
+# 学习率调度器
+scheduler:
+    name: StepLR  # ⚠️ 使用更简单的调度器
+    params:
+        step_size: 15  # ⚠️ 调整步长
+        gamma: 0.5     # ⚠️ 调整衰减因子
+
+criterion: CrossEntropyLoss
+
+# ⚠️ 关键修改：大幅减小批次大小和工作进程数
+train_params:
+    num_workers: 2    # ⚠️ 从16减小到2
+    shuffle: True
+    batch_size: 8     # ⚠️ 从128减小到8
+    prefetch_factor: 1 # ⚠️ 减小预加载
+
+test_params:
+    num_workers: 2
+    shuffle: False
+    batch_size: 8
+    prefetch_factor: 1
+
+val_params:
+    num_workers: 2
+    shuffle: False
+    batch_size: 8
+    prefetch_factor: 1
