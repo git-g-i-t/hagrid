@@ -20,16 +20,16 @@ early_stopping:
 
 
 # --- 3. 数据集配置 ---
-# Dataset configuration   1.0
+# Dataset configuration
 dataset:
-    annotations_train: "annotations_mini/train"
-    annotations_val: "annotations_mini/val" 
-    annotations_test: "annotations_mini/test"
+    # 标注文件与图片路径占位符
+    annotations_train: <path_to_json_train>
+    annotations_val: <path_to_json_val>
+    annotations_test: <path_to_json_test>
 
-    dataset_train: "dataset_mini/train"
-    dataset_val: "dataset_mini/val"
-    dataset_test: "dataset_mini/test"
-
+    dataset_train: <path_to_dataset_folder>
+    dataset_val: <path_to_dataset_folder>
+    dataset_test: <path_to_dataset_folder>
     
     # 图像参数
     img_size: &img_size 224     # Image size for training, must be square
@@ -43,15 +43,42 @@ dataset:
     one_class: False  # False = 多分类（区分具体手势）；True = 二分类（只区分是不是手）
 
     # 分类类别列表
+    # 模型输出层的神经元数量 = 列表长度 (这里是 34 类)
     targets:
+        - grabbing
+        - grip
+        - holy
+        - point
+        - call
+        - three3
+        - timeout
+        - xsign
         - hand_heart
+        - hand_heart2
+        - little_finger
         - middle_finger
+        - take_picture
         - dislike
+        - fist
+        - four
         - like
+        - mute
+        - ok
         - one
+        - palm
+        - peace
+        - peace_inverted
+        - rock
         - stop
         - stop_inverted
-        - no_gesture
+        - three
+        - three2
+        - two_up
+        - two_up_inverted
+        - three_gun
+        - thumb_index
+        - thumb_index2 
+        - no_gesture       # "无手势"或"背景"类
 
 # --- 4. 预处理与增强管道 ---
 # Transform and augmentation pipeline. See https://albumentations.ai/docs/ for using
@@ -114,9 +141,9 @@ test_transforms:
 # --- 5. 模型参数 ---
 model:
     name: ResNet18               # 模型名称
-    pretrained: False           # 是否加载 ImageNet 预训练权重    1.0
+    pretrained: False            # 是否加载 ImageNet 预训练权重
     pretrained_backbone: False
-    checkpoint: "work_dir\\ResNet18\\ResNet18_epoch-19_F1Score-0.5_loss-0.01.pth"
+    checkpoint: null
 
 # --- 6. 优化器 ---
 optimizer:
@@ -141,20 +168,20 @@ criterion: CrossEntropyLoss
 
 # --- 9. 数据加载参数 ---
 train_params:
-    num_workers: 2    # 线程数  1.0
+    num_workers: 16    # 线程数
     shuffle: True      # 训练必须打乱
-    batch_size: 32    # 批大小
+    batch_size: 128    # 批大小
     prefetch_factor: 3 # 预读取数量
 
 # 同上
 test_params:
-    num_workers: 2
+    num_workers: 16
     shuffle: False
-    batch_size: 32
+    batch_size: 128
     prefetch_factor: 3
 
 val_params:
-    num_workers: 2
-    shuffle: True
-    batch_size: 32
+    num_workers: 16
+    shuffle: False
+    batch_size: 128
     prefetch_factor: 3

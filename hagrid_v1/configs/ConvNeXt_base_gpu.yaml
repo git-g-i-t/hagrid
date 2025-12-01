@@ -1,0 +1,142 @@
+# 实验参数
+epochs: 100  # ⚠️ 恢复训练轮数
+log_every: 50  
+eval_every: 1  # ⚠️ 每个epoch都验证
+test_every: 5  # ⚠️ 每5个epoch测试一次
+experiment_name: ConvNeXt_base_gpu  # ⚠️ 改名以反映GPU
+work_dir: work_dir
+
+# 早停设置
+early_stopping:
+    epochs: 10  # ⚠️ 恢复早停耐心
+    metric: 0.01
+
+# 数据集配置
+dataset:
+    annotations_train: "annotations_mini/train"
+    annotations_val: "annotations_mini/val" 
+    annotations_test: "annotations_mini/test"
+
+    dataset_train: "dataset_mini/train"
+    dataset_val: "dataset_mini/val"
+    dataset_test: "dataset_mini/test"
+
+    img_size: &img_size 224  # ⚠️ 关键：恢复原尺寸，利用GPU性能
+    img_mean: &img_mean [0.54, 0.499, 0.474]
+    img_std: &img_std [0.234, 0.235, 0.231]
+    subset: -1  # ⚠️ 使用全部数据
+
+    one_class: False
+
+    # 手势类别标签列表（保持原样）
+    targets:
+        - hand_heart
+        - middle_finger
+        - dislike
+        - like
+        - one
+        - stop
+        - stop_inverted
+        - no_gesture
+
+# 训练数据增强（恢复原尺寸）
+train_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    HorizontalFlip:  # ⚠️ 添加数据增强
+        p: 0.5
+    ColorJitter:  # ⚠️ 添加颜色增强
+        brightness: 0.2
+        contrast: 0.2
+        saturation: 0.2
+        hue: 0.1
+        p: 0.5
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# 验证集数据变换
+val_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# 测试集数据变换
+test_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# 模型参数配置
+model:
+    name: ConvNeXt_base
+    pretrained: false  # ⚠️ 使用预训练权重，加速收敛
+    pretrained_backbone: False
+    checkpoint: null
+
+# 优化器配置
+optimizer:
+    name: AdamW
+    params:
+        lr: 0.002  # ⚠️ 适当增加学习率（GPU训练更稳定）
+        weight_decay: 0.05
+        eps: 0.00000001
+
+# 学习率调度器
+scheduler:
+    name: CosineAnnealingLR  # ⚠️ 使用余弦退火，更适合深度学习
+    params:
+        T_max: 100  # 总epoch数
+        eta_min: 0.00001  # 最小学习率
+
+criterion: CrossEntropyLoss
+
+# ⚠️ 关键修改：大幅增加批次大小和工作进程数
+train_params:
+    num_workers: 8    # ⚠️ 增加工作进程，利用多核CPU
+    shuffle: True
+    batch_size: 32     # ⚠️ RTX 4070S可以处理更大的批次（从8增加到32）
+    prefetch_factor: 2 # ⚠️ 增加预加载
+
+test_params:
+    num_workers: 8
+    shuffle: False
+    batch_size: 32
+    prefetch_factor: 2
+
+val_params:
+    num_workers: 8
+    shuffle: False
+    batch_size: 32
+    prefetch_factor: 2

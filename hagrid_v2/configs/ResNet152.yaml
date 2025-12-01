@@ -1,0 +1,169 @@
+# ==========================================================================================================
+# 这份 ResNet152.yaml 配置文件与之前的 ResNet18.yaml 相比，95% 的内容是完全一样的
+# 在代码层面，只有 3 处关键区别:
+#     1. 实验名称 (无实质影响)   仅影响日志文件夹的命名
+#     2. 模型架构 (核心区别)     model: name: ResNet18 变为 ResNet152
+#        ResNet18只有 18 层深。轻量、训练快、显存占用小。
+#        ResNet152 有 152 层深（是 ResNet 系列里最深的），更复杂、更强大，但训练更慢、显存占用更大。
+#     3. 学习率 (Learning Rate) 优化器学习率从 0.01 提升到 0.1（因为 ResNet152 更深更复杂，通常需要更大学习率）
+# ===========================================================================================================
+# Exp params
+epochs: 100
+log_every: 100 # Log every n iterations
+eval_every: 1 # Eval and save every n epochs
+test_every: 0 # Test every n epochs
+experiment_name: ResNet152
+work_dir: work_dir
+
+# Stop training conditions
+early_stopping:
+    epochs: 10
+    metric: 0.01
+
+
+# Dataset configuration
+dataset:
+    annotations_train: <path_to_json_train>
+    annotations_val: <path_to_json_val>
+    annotations_test: <path_to_json_test>
+
+    dataset_train: <path_to_dataset_folder>
+    dataset_val: <path_to_dataset_folder>
+    dataset_test: <path_to_dataset_folder>
+
+    img_size: &img_size 224 # Image size for training, must be square
+    img_mean: &img_mean [0.54, 0.499, 0.474]
+    img_std: &img_std [0.234, 0.235, 0.231]
+    subset: -1 # Amount of training data
+
+    one_class: False
+
+    targets:
+        - grabbing
+        - grip
+        - holy
+        - point
+        - call
+        - three3
+        - timeout
+        - xsign
+        - hand_heart
+        - hand_heart2
+        - little_finger
+        - middle_finger
+        - take_picture
+        - dislike
+        - fist
+        - four
+        - like
+        - mute
+        - ok
+        - one
+        - palm
+        - peace
+        - peace_inverted
+        - rock
+        - stop
+        - stop_inverted
+        - three
+        - three2
+        - two_up
+        - two_up_inverted
+        - three_gun
+        - thumb_index
+        - thumb_index2
+        - no_gesture
+
+# Transform and augmentation pipeline. See https://albumentations.ai/docs/ for using
+train_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+val_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+test_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# Model parameters. See model_card for using
+model:
+    name: ResNet152
+    pretrained: False
+    pretrained_backbone: False
+    checkpoint: null
+
+# Model optimizer params
+optimizer:
+    name: SGD
+    params:
+        lr: 0.1
+        weight_decay: 0.0001
+        momentum: 0.9
+
+scheduler:
+    name: ReduceLROnPlateau
+    params:
+        mode: min
+        factor: 0.1
+
+criterion: CrossEntropyLoss
+
+train_params:
+    num_workers: 16
+    shuffle: True
+    # 有话说：显存爆炸风险
+    # 建议：如果你没有 A100 或 RTX 3090/4090 级别的显卡
+    # 跑 ResNet152.yaml 时，请务必将 batch_size 改小（例如改成 32 或 64）
+    # 同时为了保持训练效果，可能需要对应地将 lr (学习率) 也按比例减小。
+    batch_size: 128      
+    prefetch_factor: 3
+
+test_params:
+    num_workers: 16
+    shuffle: False
+    batch_size: 128
+    prefetch_factor: 3
+
+val_params:
+    num_workers: 16
+    shuffle: False
+    batch_size: 128
+    prefetch_factor: 3

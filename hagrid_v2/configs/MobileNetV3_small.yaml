@@ -1,0 +1,169 @@
+# ==========================================
+#  MobileNetV3_small 配置文件详解
+# 任务类型：图像分类 (全帧分类)
+# 核心定位：这是整个仓库中体积最小、速度最快的模型。
+# ==========================================
+
+# --- 1. 实验控制参数 ---
+epochs: 100
+log_every: 100
+eval_every: 1
+test_every: 0
+experiment_name: MobileNetV3_small
+work_dir: work_dir
+
+# --- 2. 早停策略 ---
+early_stopping:
+    epochs: 10
+    metric: 0.01
+
+# --- 3. 数据集配置 (与 ResNet 一致) ---
+dataset:
+    annotations_train: "annotations/train"
+    annotations_val: "annotations/val"
+    annotations_test: "annotations/test"
+
+    dataset_train: <path_to_dataset_folder>
+    dataset_val: <path_to_dataset_folder>
+    dataset_test: <path_to_dataset_folder>
+
+    img_size: &img_size 224
+    img_mean: &img_mean [0.54, 0.499, 0.474]
+    img_std: &img_std [0.234, 0.235, 0.231]
+    subset: -1
+    
+    one_class: False # 多分类任务
+
+    # 34 种手势类别
+    targets:
+        - grabbing
+        - grip
+        - holy
+        - point
+        - call
+        - three3
+        - timeout
+        - xsign
+        - hand_heart
+        - hand_heart2
+        - little_finger
+        - middle_finger
+        - take_picture
+        - dislike
+        - fist
+        - four
+        - like
+        - mute
+        - ok
+        - one
+        - palm
+        - peace
+        - peace_inverted
+        - rock
+        - stop
+        - stop_inverted
+        - three
+        - three2
+        - two_up
+        - two_up_inverted
+        - three_gun
+        - thumb_index
+        - thumb_index2
+        - no_gesture
+
+# --- 4. 预处理管道 (标准分类预处理) ---
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:      # 必须归一化！
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+val_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+test_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# --- 5. 模型参数 ---
+model:
+    name: MobileNetV3_small
+    pretrained: False
+    pretrained_backbone: False
+    checkpoint: null
+
+# --- 6. 优化器 (参数有所调整) ---
+optimizer:
+    name: SGD
+    params:
+        lr: 0.005             # 较小的学习率，适合轻量模型
+                              # 原因：MobileNet 使用深度可分离卷积，结构较脆弱，大学习率容易导致震荡
+        momentum: 0.9
+        weight_decay: 0.0005  # 启用权重衰减，防止过拟合
+
+# --- 7. 学习率调度器 (重大变化) ---
+# 有话说：这是重大变化
+# ResNet 使用的是 ReduceLROnPlateau (监控 Loss 动态调整)
+# 这里使用的是 StepLR (固定步长调整)
+scheduler:
+    name: StepLR
+    params:
+        step_size: 30 # 每过 30 个 epoch
+        gamma: 0.1    # 学习率乘以 0.1 (衰减 10 倍)
+                      # 即：第30轮变 0.0005，第60轮变 0.00005...
+
+criterion: CrossEntropyLoss
+
+# --- 8. 数据加载参数 (⚠️注意警告) ---
+train_params:
+    num_workers: 64    # ⚠️ 警告：64 个线程极高！
+                       # 除非你有 32核/64线程 的服务器级 CPU，
+    shuffle: True
+    batch_size: 128    # MobileNet 模型很小，128 完全没问题，甚至可以开到 256
+    prefetch_factor: 3
+
+test_params:
+    num_workers: 64
+    shuffle: True       # ⚠️注意：通常测试集不需要 shuffle，但这里开启了，因为分类任务不需要对应结果顺序
+    batch_size: 128
+    prefetch_factor: 3
+
+val_params:
+    num_workers: 64
+    shuffle: True
+    batch_size: 128
+    prefetch_factor: 3

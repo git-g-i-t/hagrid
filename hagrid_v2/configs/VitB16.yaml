@@ -1,34 +1,34 @@
-# 实验参数
-epochs: 50  # ⚠️ 减少训练轮数，先测试
-log_every: 50  # ⚠️ 减少日志频率
-eval_every: 2  # ⚠️ 每2个epoch验证一次
-test_every: 0
-experiment_name: ConvNeXt_base_CPU  # ⚠️ 改名以区分
+#Exp params
+epochs: 100
+log_every: 100  # Log every n iterations
+eval_every: 1 # Eval and save every n epochs
+test_every: 0 # Test every n epochs
+experiment_name: VitB16
 work_dir: work_dir
 
-# 早停设置
+# Stop training conditions
 early_stopping:
-    epochs: 5  # ⚠️ 减少早停耐心
+    epochs: 10
     metric: 0.01
 
-# 数据集配置
+
+# Dataset configuration
 dataset:
-    annotations_train: "annotations_mini/train"
-    annotations_val: "annotations_mini/val" 
-    annotations_test: "annotations_mini/test"
+    annotations_train: <path_to_json_train>
+    annotations_val: <path_to_json_val>
+    annotations_test: <path_to_json_test>
 
-    dataset_train: "dataset_mini/train"
-    dataset_val: "dataset_mini/val"
-    dataset_test: "dataset_mini/test"
+    dataset_train: <path_to_dataset_folder>
+    dataset_val: <path_to_dataset_folder>
+    dataset_test: <path_to_dataset_folder>
 
-    img_size: &img_size 128  # ⚠️ 关键：减小图像尺寸
+    img_size: &img_size 224 # Image size for training, must be square
     img_mean: &img_mean [0.54, 0.499, 0.474]
     img_std: &img_std [0.234, 0.235, 0.231]
-    subset: 500  # ⚠️ 关键：使用数据子集
+    subset: -1 # Amount of training data
 
     one_class: False
 
-    # 手势类别标签列表（保持原样）
     targets:
         - grabbing
         - grip
@@ -65,10 +65,10 @@ dataset:
         - thumb_index2
         - no_gesture
 
-# 训练数据增强（相应调整尺寸）
+# Transform and augmentation pipeline. See https://albumentations.ai/docs/ for using
 train_transforms:
     LongestMaxSize:
-        max_size: *img_size  # ⚠️ 使用新尺寸
+        max_size: *img_size
         p: 1
     PadIfNeeded:
         min_height: *img_size
@@ -82,7 +82,6 @@ train_transforms:
         max_pixel_value: 255.0
         p: 1
 
-# 验证集数据变换
 val_transforms:
     LongestMaxSize:
         max_size: *img_size
@@ -99,7 +98,6 @@ val_transforms:
         max_pixel_value: 255.0
         p: 1
 
-# 测试集数据变换
 test_transforms:
     LongestMaxSize:
         max_size: *img_size
@@ -116,45 +114,41 @@ test_transforms:
         max_pixel_value: 255.0
         p: 1
 
-# 模型参数配置
+# Model parameters. See model_card for using
 model:
-    name: ConvNeXt_base
-    pretrained: False
-    pretrained_backbone: False
+    name: VitB16
+    pretrained: True
     checkpoint: null
 
-# 优化器配置
+# Model optimizer params
 optimizer:
-    name: AdamW
+    name: SGD
     params:
-        lr: 0.001  # ⚠️ 减小学习率
-        weight_decay: 0.05
-        eps: 0.00000001
+        lr: 0.005
+        momentum: 0.9
+        weight_decay: 0.0005
 
-# 学习率调度器
 scheduler:
-    name: StepLR  # ⚠️ 使用更简单的调度器
+    name: CosineAnnealingLR
     params:
-        step_size: 15  # ⚠️ 调整步长
-        gamma: 0.5     # ⚠️ 调整衰减因子
+        T_max: 8
 
 criterion: CrossEntropyLoss
 
-# ⚠️ 关键修改：大幅减小批次大小和工作进程数
 train_params:
-    num_workers: 2    # ⚠️ 从16减小到2
+    num_workers: 16
     shuffle: True
-    batch_size: 8     # ⚠️ 从128减小到8
-    prefetch_factor: 1 # ⚠️ 减小预加载
+    batch_size: 128
+    prefetch_factor: 3
 
 test_params:
-    num_workers: 2
-    shuffle: False
-    batch_size: 8
-    prefetch_factor: 1
+    num_workers: 16
+    shuffle: Fasle
+    batch_size: 128
+    prefetch_factor: 3
 
 val_params:
-    num_workers: 2
+    num_workers: 16
     shuffle: False
-    batch_size: 8
-    prefetch_factor: 1
+    batch_size: 128
+    prefetch_factor: 3
