@@ -12,7 +12,7 @@ from typing import Optional, Tuple
 
 # 配置管理工具
 from omegaconf import OmegaConf
-# PyTorch 分布式训练清理工具     小吴有话说：这里只针对多gpu需要使用，还显示未解析的引用，我觉得可以直接删除相关内容
+# PyTorch 分布式训练清理工具
 from torch.distributed import destroy_process_group
 
 # 尝试导入目标检测的评估指标：Mean Average Precision (mAP)
@@ -24,8 +24,7 @@ except ImportError:
     MeanAveragePrecision = MAP
 
 # 导入自定义工具模块
-# ddp_setup: 用于设置分布式数据并行 (Distributed Data Parallel) 环境
-from custom_utils.ddp_utils import ddp_setup
+
 # train_utils: 包含加载数据、加载优化器以及核心的 Trainer 类
 from custom_utils.train_utils import Trainer, load_train_objects, load_train_optimizer
 # utils: 自定义的带日志功能的 F1 分数计算器（用于分类任务）
@@ -43,7 +42,7 @@ def parse_arguments(params: Optional[Tuple] = None) -> argparse.Namespace:
         "-c", "--command", required=False, type=str, default="train", help="Training or test pipeline", choices=("train", "test")
     )
     # -p / --path_to_config: 可选参数，YAML 配置文件的路径默认（configs/convnext_base.yaml）改动1.0
-    parser.add_argument("-p", "--path_to_config", required=False, type=str, default="configs\ConvNeXt_base_gpu.yaml", help="Path to config")
+    parser.add_argument("-p", "--path_to_config", required=False, type=str, default="configs\simple_cnn.yaml", help="Path to config")
     # --n_gpu: 可选参数，指定使用的 GPU 数量，默认为 1
     parser.add_argument("--n_gpu", required=False, type=int, default=1, help="Number of GPUs to use")
 
@@ -57,10 +56,6 @@ def run(args):
     """
     # 1. 加载 YAML 配置文件
     config = OmegaConf.load(args.path_to_config)
-
-    # 2. 如果 GPU 数量大于 1，初始化分布式训练环境 (DDP)       应该用不上
-    if args.n_gpu > 1:
-        ddp_setup()
 
     # 3. 加载训练所需的关键对象
     # train_dataloader: 训练数据加载器

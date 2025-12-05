@@ -12,7 +12,7 @@ import torch
 from albumentations.pytorch import ToTensorV2
 from omegaconf import DictConfig
 from torchmetrics import F1Score
-
+from omegaconf import OmegaConf 
 # 导入自定义的模型列表（在 models/__init__.py 中定义）
 from models import classifiers_list, detectors_list
 
@@ -215,29 +215,28 @@ class LossAverager:
 
 def get_transform(transform_config: DictConfig, model_type: str):
     """
-    构建数据增强 Pipeline (使用 Albumentations)
-    
-    Parameters
-    ----------
-    transform_config : DictConfig
-        配置文件中的 transforms 部分
-    model_type : str
-        "detector" 或 "classifier"
+    构建数据增强 Pipeline
+    修复了 ListConfig 类型导致的 TypeError
     """
-    # 动态解析配置，构建 transforms 列表
-    # getattr(A, key) 相当于 A.LongestMaxSize 等
-    transforms_list = [getattr(A, key)(**params) for key, params in transform_config.items()]
-    transforms_list.append(ToTensorV2()) # 必须步骤：转为 PyTorch Tensor
+    transforms_list = []
+    
+    for key, params in transform_config.items():
+        # ✅【核心修改】
+        # OmegaConf 读取的参数是 DictConfig/ListConfig 类型
+        # Albumentations 不认这些类型，必须转回 Python 原生的 dict/list
+        real_params = OmegaConf.to_container(params, resolve=True)
+        
+        # 实例化增强方法
+        transforms_list.append(getattr(A, key)(**real_params))
+
+    transforms_list.append(ToTensorV2())
 
     if model_type == "detector":
-        # 检测模型需要处理 BBox
-        # bbox_params 设置为 pascal_voc 格式 [x_min, y_min, x_max, y_max]
         return A.Compose(
             transforms_list,
             bbox_params=A.BboxParams(format="pascal_voc", min_area=0, min_visibility=0, label_fields=["class_labels"]),
         )
     elif model_type == "classifier":
-        # 分类模型只需要处理图片
         return A.Compose(transforms_list)
 
 

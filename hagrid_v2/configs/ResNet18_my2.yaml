@@ -1,0 +1,171 @@
+# ==========================================
+# ResNet18 第二版：高性能优化配置
+# 特性：强数据增强 + 预训练 + AdamW
+# ==========================================
+
+# ---------- 1. 实验控制参数 ----------
+epochs: 100
+log_every: 50       # 建议稍微频繁一点，方便观察
+eval_every: 1
+test_every: 0
+experiment_name: ResNet18_StrongAug_v2
+work_dir: work_dir
+
+# ---------- 2. 早停策略 ---------------
+early_stopping:
+    epochs: 15      # 增强后模型收敛波动大，耐心值给大一点
+    metric: 0.01
+
+# --- 3. 数据集配置 ---
+dataset:
+    annotations_train: "annotations_mini/train"
+    annotations_val: "annotations_mini/val" 
+    annotations_test: "annotations_mini/val" # 暂时指向 val
+
+    dataset_train: "dataset_mini/train"
+    dataset_val: "dataset_mini/val"
+    dataset_test: "dataset_mini/val"
+
+    img_size: &img_size 224
+    img_mean: &img_mean [0.54, 0.499, 0.474]
+    img_std: &img_std [0.234, 0.235, 0.231]
+
+    subset: -1
+    one_class: False
+
+    # 你的 8 个类别
+    targets:
+        - hand_heart
+        - middle_finger
+        - dislike
+        - like
+        - one
+        - stop
+        - stop_inverted
+        - no_gesture
+
+# --- 4. 预处理与增强管道 (🔥 重点修改区域) ---
+train_transforms:
+    # 1. 几何变换：模拟各种手势角度和位置
+    HorizontalFlip:
+        p: 0.5  # 50% 概率左右翻转
+    
+    ShiftScaleRotate:
+        shift_limit: 0.1    # 平移
+        scale_limit: 0.1    # 缩放
+        rotate_limit: 20    # 旋转 +/- 20度
+        border_mode: 0      # 边界填黑
+        value: [144,144,144]
+        p: 0.5
+
+    # 2. 像素变换：模拟不同画质和光照
+    RandomBrightnessContrast:
+        p: 0.3  # 调整亮度对比度
+        
+    RGBShift:
+        r_shift_limit: 20
+        g_shift_limit: 20
+        b_shift_limit: 20
+        p: 0.3  # 调整色调
+
+    GaussNoise:
+        var_limit: [10.0, 50.0]
+        p: 0.2  # 增加噪点
+
+    MotionBlur:
+        blur_limit: 5
+        p: 0.2  # 增加运动模糊
+
+    # 3. 基础处理 (必须保留在最后)
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# 验证集保持干净 (不要改动)
+val_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# 测试集保持干净
+test_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# --- 5. 模型参数 ---
+model:
+    name: ResNet18
+    pretrained: True         # 🔥 必须改为 True，否则强增强下很难收敛
+    pretrained_backbone: True
+    checkpoint: work_dir\ResNet18_StrongAug_v2\ResNet18_epoch-2_F1Score-0.77_loss-0.47.pth         # 🔥 新的训练建议设为 null，从头开始跑预训练
+
+# --- 6. 优化器 (🔥 建议修改) ---
+optimizer:
+    name: AdamW              # 🔥 换用 AdamW，比 SGD 更适合处理复杂增强
+    params:
+        lr: 0.0005           # 学习率给小一点 (0.001 -> 0.0005)
+        weight_decay: 0.01   # 增加权重衰减，防止过拟合
+
+# --- 7. 调度器 ---
+scheduler:
+    name: ReduceLROnPlateau
+    params:
+        mode: min
+        factor: 0.1
+        patience: 5
+
+# --- 8. 损失函数 ---
+criterion: CrossEntropyLoss
+
+# --- 9. 数据加载参数 (针对 GPU 优化) ---
+train_params:
+    num_workers: 4      # 🔥 如果是 GPU，尝试开到 4 (Windows若报错则改回0)
+    shuffle: True
+    batch_size: 64      # 🔥 显存允许的话，开大一点 (32 -> 64)
+    prefetch_factor: 2  # 配合 num_workers > 0
+
+test_params:
+    num_workers: 4
+    shuffle: False
+    batch_size: 64
+    prefetch_factor: 2
+
+val_params:
+    num_workers: 4
+    shuffle: True       # 🔥 必须为 True
+    batch_size: 64
+    prefetch_factor: 2

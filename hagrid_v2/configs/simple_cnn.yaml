@@ -1,0 +1,161 @@
+# ==========================================
+# SimpleCNN 解决欠拟合专用配置
+# 策略：增强版模型结构 + 降低数据增强难度
+# ==========================================
+
+# ---------- 1. 实验控制参数 ----------
+epochs: 100         # ⚠️ 增加轮数，从头训练收敛慢，给它时间
+log_every: 9       # 频繁打印，观察 Loss 下降趋势
+eval_every: 1
+test_every: 0
+experiment_name: SimpleCNN_Fix_Underfit
+work_dir: work_dir
+
+# ---------- 2. 早停策略 ---------------
+early_stopping:
+    epochs: 15      # 耐心给足
+    metric: 0.01
+
+# --- 3. 数据集配置 ---
+dataset:
+    annotations_train: "annotations_mini/train"
+    annotations_val: "annotations_mini/val" 
+    annotations_test: "annotations_mini/val" # 暂时指向 val
+
+    dataset_train: "dataset_mini/train"
+    dataset_val: "dataset_mini/val"
+    dataset_test: "dataset_mini/val"
+
+    # 128x128 对自定义小模型足够了，训练快
+    img_size: &img_size 128
+    
+    img_mean: &img_mean [0.54, 0.499, 0.474]
+    img_std: &img_std [0.234, 0.235, 0.231]
+
+    subset: -1
+    one_class: False
+
+    # 你的 7 个类别
+    targets:
+        - hand_heart
+        - middle_finger
+        - dislike
+        - like
+        - one
+        - stop
+        - stop_inverted
+        - no_gesture
+
+# --- 4. 预处理与增强管道 (⚠️ 核心修改：大幅减弱增强) ---
+train_transforms:
+    # 1. 简单的几何变换 (保留)
+    HorizontalFlip:
+        p: 0.5
+    
+    # 2. 轻微的旋转平移 (保留但幅度减小)
+    ShiftScaleRotate:
+        shift_limit: 0.05   # 改小：移动幅度
+        scale_limit: 0.05   # 改小：缩放幅度
+        rotate_limit: 15    # 改小：旋转角度
+        border_mode: 0
+        value: [144,144,144]
+        p: 0.5
+
+    # ❌ 删除了 GaussNoise (噪点), MotionBlur (模糊), RGBShift (色偏)
+    # 原因：欠拟合说明模型学不会，要把题目变简单点
+
+    # 3. 基础处理 (必须保留)
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# 验证集保持干净
+val_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+test_transforms:
+    LongestMaxSize:
+        max_size: *img_size
+        p: 1
+    PadIfNeeded:
+        min_height: *img_size
+        min_width: *img_size
+        value: [144,144,144]
+        border_mode: 0
+        p: 1
+    Normalize:
+        mean: *img_mean
+        std: *img_std
+        max_pixel_value: 255.0
+        p: 1
+
+# --- 5. 模型参数 ---
+model:
+    name: SimpleCNN          # ✅ 名字不用变，代码已经覆盖了
+    pretrained: False        # 必须 False
+    pretrained_backbone: False
+    checkpoint: null
+
+# --- 6. 优化器 (大幅修改) ---
+optimizer:
+    name: AdamW
+    params:
+        # ⚠️ 降级：从 0.001 改为 0.0001
+        # 如果 0.0001 还是不动，甚至可以试 0.00005
+        lr: 0.0001           
+        
+        # ⚠️ 松绑：暂时去掉正则化，让模型自由奔跑
+        weight_decay: 0.0    
+
+# --- 7. 调度器 (配合修改) ---
+scheduler:
+    name: ReduceLROnPlateau
+    params:
+        mode: min
+        factor: 0.5
+        patience: 3          # 稍微没耐心一点，降不下来就赶紧降低 LR 试试
+
+criterion: CrossEntropyLoss
+
+# --- 8. 数据加载参数 ---
+train_params:
+    num_workers: 0
+    shuffle: True
+    batch_size: 32           # ⚠️ 从 64 改回 32，让更新频率变快
+    prefetch_factor: null
+
+test_params:
+    num_workers: 0
+    shuffle: False
+    batch_size: 32
+    prefetch_factor: null
+
+val_params:
+    num_workers: 0
+    shuffle: True
+    batch_size: 32
+    prefetch_factor: null

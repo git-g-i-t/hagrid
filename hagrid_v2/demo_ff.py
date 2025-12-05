@@ -144,7 +144,7 @@ def parse_arguments(params: Optional[Tuple] = None) -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(description="Demo full frame classification...")
     # 必须参数：配置文件路径
-    parser.add_argument("-p", "--path_to_config", required=True, type=str, help="Path to config")
+    parser.add_argument("-p", "--path_to_config", required=False, type=str, default="configs\ResNet18_my.yaml", help="Path to config")
 
     known_args, _ = parser.parse_known_args(params)
     return known_args
