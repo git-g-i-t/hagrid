@@ -42,7 +42,7 @@ def parse_arguments(params: Optional[Tuple] = None) -> argparse.Namespace:
         "-c", "--command", required=False, type=str, default="train", help="Training or test pipeline", choices=("train", "test")
     )
     # -p / --path_to_config: 可选参数，YAML 配置文件的路径默认（configs/convnext_base.yaml）改动1.0
-    parser.add_argument("-p", "--path_to_config", required=False, type=str, default="configs\simple_cnn.yaml", help="Path to config")
+    parser.add_argument("-p", "--path_to_config", required=False, type=str, default="configs\ResNet18_my.yaml", help="Path to config")
     # --n_gpu: 可选参数，指定使用的 GPU 数量，默认为 1
     parser.add_argument("--n_gpu", required=False, type=int, default=1, help="Number of GPUs to use")
 

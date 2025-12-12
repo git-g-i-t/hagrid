@@ -45,14 +45,13 @@ dataset:
     # 分类类别列表
     # 模型输出层的神经元数量 = 列表长度 (这里是 34 类)
     targets:
-        - hand_heart
-        - middle_finger
-        - dislike
+        - call
+        - ok
         - like
-        - one
         - stop
-        - stop_inverted
-        - no_gesture
+        - three
+        - holy
+        - hand_heart
 
 # --- 4. 预处理与增强管道 ---
 # Transform and augmentation pipeline. See https://albumentations.ai/docs/ for using
@@ -117,7 +116,7 @@ model:
     name: ResNet18               # 模型名称
     pretrained: False           # 是否加载 ImageNet 预训练权重    1.0
     pretrained_backbone: False
-    checkpoint: "work_dir/ResNet18/ResNet18_epoch-19_F1Score-0.5_loss-0.01.pth"
+    checkpoint: null
 
 # --- 6. 优化器 ---
 optimizer:

@@ -38,14 +38,13 @@ IMAGES = (".jpeg", ".jpg", ".jp2", ".png", ".tiff", ".jfif", ".bmp", ".webp", ".
 # }
 
 targets = {
-    0: "hand_heart",
-    1: "middle_finger",
-    2: "dislike",
-    3: "like",
-    4: "one",
-    5: "stop",
-    6: "stop_inverted",
-    7: "no_gesture",
+    0: "call",
+    1: "ok",
+    2: "like",
+    3: "stop",
+    4: "three",
+    5: "holy",
+    6: "hand_heart",
 }
 
  

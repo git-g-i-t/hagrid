@@ -37,14 +37,12 @@ dataset:
 
     # 你的 7 个类别
     targets:
-        - hand_heart
-        - middle_finger
-        - dislike
+        - call
+        - ok
         - like
-        - one
         - stop
-        - stop_inverted
-        - no_gesture
+        - three
+        - hand_heart
 
 # --- 4. 预处理与增强管道 (⚠️ 核心修改：大幅减弱增强) ---
 train_transforms:
