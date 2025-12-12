@@ -19,13 +19,13 @@ early_stopping:
 
 # --- 3. 数据集配置 (与 ResNet 一致) ---
 dataset:
-    annotations_train: "annotations/train"
-    annotations_val: "annotations/val"
-    annotations_test: "annotations/test"
+    annotations_train: "hagrid_v2/annotations_mini/train"
+    annotations_val: "hagrid_v2/annotations_mini/val"
+    annotations_test: "hagrid_v2/annotations_mini/test"
 
-    dataset_train: <path_to_dataset_folder>
-    dataset_val: <path_to_dataset_folder>
-    dataset_test: <path_to_dataset_folder>
+    dataset_train: "hagrid_v2/dataset_mini/train"
+    dataset_val: "hagrid_v2/dataset_mini/val"
+    dataset_test: "hagrid_v2/dataset_mini/test"
 
     img_size: &img_size 224
     img_mean: &img_mean [0.54, 0.499, 0.474]
@@ -36,42 +36,16 @@ dataset:
 
     # 34 种手势类别
     targets:
-        - grabbing
-        - grip
-        - holy
-        - point
         - call
-        - three3
-        - timeout
-        - xsign
-        - hand_heart
-        - hand_heart2
-        - little_finger
-        - middle_finger
-        - take_picture
-        - dislike
-        - fist
-        - four
-        - like
-        - mute
         - ok
-        - one
-        - palm
-        - peace
-        - peace_inverted
-        - rock
+        - like
         - stop
-        - stop_inverted
         - three
-        - three2
-        - two_up
-        - two_up_inverted
-        - three_gun
-        - thumb_index
-        - thumb_index2
-        - no_gesture
+        - holy
+        - hand_heart
 
 # --- 4. 预处理管道 (标准分类预处理) ---
+train_transforms:
     LongestMaxSize:
         max_size: *img_size
         p: 1
@@ -123,7 +97,7 @@ test_transforms:
 model:
     name: MobileNetV3_small
     pretrained: False
-    pretrained_backbone: False
+    pretrained_backbone: True
     checkpoint: null
 
 # --- 6. 优化器 (参数有所调整) ---
@@ -150,20 +124,20 @@ criterion: CrossEntropyLoss
 
 # --- 8. 数据加载参数 (⚠️注意警告) ---
 train_params:
-    num_workers: 64    # ⚠️ 警告：64 个线程极高！
+    num_workers: 16    # ⚠️ 警告：64 个线程极高！
                        # 除非你有 32核/64线程 的服务器级 CPU，
     shuffle: True
     batch_size: 128    # MobileNet 模型很小，128 完全没问题，甚至可以开到 256
     prefetch_factor: 3
 
 test_params:
-    num_workers: 64
+    num_workers: 16
     shuffle: True       # ⚠️注意：通常测试集不需要 shuffle，但这里开启了，因为分类任务不需要对应结果顺序
     batch_size: 128
     prefetch_factor: 3
 
 val_params:
-    num_workers: 64
+    num_workers: 16
     shuffle: True
     batch_size: 128
     prefetch_factor: 3
