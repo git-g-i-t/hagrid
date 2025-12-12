@@ -1,9 +1,9 @@
 from functools import partial
 from torchvision import models
 
-# 1. 导入你刚才写的 SimpleCNN 类
-# 注意路径：.classifiers.simple_cnn 是文件名，SimpleCNN 是类名
+# 自己写的模型
 from .classifiers.simple_cnn import SimpleCNN  
+from .classifiers.se_resnet import se_resnet18
 
 # 你的 Wrapper (之前改好的 base_model_my)
 from .classifiers.base_model_my import ClassifierModel
@@ -19,6 +19,9 @@ detectors_list = {
 # 偷梁换柱成了你 base_model_my.py 里的那个新类
 classifiers_list = {
     "SimpleCNN": partial(ClassifierModel, model=SimpleCNN),
+    # 注册 SE-ResNet18
+    # 注意：这里我们用 ClassifierModel 包装它，但 model 参数传我们写的函数
+    "SE_ResNet18": partial(ClassifierModel, model=se_resnet18),
     # 其他模型
     "ResNet18": partial(ClassifierModel, models.resnet18),
     "ResNet152": partial(ClassifierModel, models.resnet152),
