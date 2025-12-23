@@ -22,14 +22,13 @@ early_stopping:
 # --- 3. 数据集配置 ---
 # Dataset configuration
 dataset:
-    # 标注文件与图片路径占位符
-    annotations_train: <path_to_json_train>
-    annotations_val: <path_to_json_val>
-    annotations_test: <path_to_json_test>
+    annotations_train: "hagrid_v2/annotations_mini/train"
+    annotations_val: "hagrid_v2/annotations_mini/val"
+    annotations_test: "hagrid_v2/annotations_mini/test"
 
-    dataset_train: <path_to_dataset_folder>
-    dataset_val: <path_to_dataset_folder>
-    dataset_test: <path_to_dataset_folder>
+    dataset_train: "hagrid_v2/dataset_mini/train"
+    dataset_val: "hagrid_v2/dataset_mini/val"
+    dataset_test: "hagrid_v2/dataset_mini/test"
     
     # 图像参数
     img_size: &img_size 224     # Image size for training, must be square

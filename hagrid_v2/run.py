@@ -82,6 +82,10 @@ def run(args):
 
     # 6. 初始化 Trainer 实例
     # Trainer 类封装了具体的训练循环（Forward, Backward, Loss计算）和验证逻辑
+    
+    # 确定日志子目录 (train 或 test)
+    log_subdir = "train" if args.command == "train" else "test"
+    
     trainer = Trainer(
         model=model,                    # 模型
         config=config,                  # 配置
@@ -92,6 +96,7 @@ def run(args):
         val_data=val_dataloader,        # 验证数据
         test_data=test_dataloader,      # 测试数据
         n_gpu=args.n_gpu,               # GPU 数量
+        log_subdir=log_subdir,          # 日志子目录 (新增)
     )
 
     # 7. 根据命令行参数执行相应操作

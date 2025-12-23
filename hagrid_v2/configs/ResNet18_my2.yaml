@@ -128,9 +128,9 @@ test_transforms:
 # --- 5. 模型参数 ---
 model:
     name: ResNet18
-    pretrained: True         # 🔥 必须改为 True，否则强增强下很难收敛
+    pretrained: False         # 🔥 必须改为 True，否则强增强下很难收敛
     pretrained_backbone: True
-    checkpoint: null         # 🔥 新的训练建议设为 null，从头开始跑预训练
+    checkpoint: null        # 🔥 新的训练建议设为 null，从头开始跑预训练
 
 # --- 6. 优化器 (🔥 建议修改) ---
 optimizer:

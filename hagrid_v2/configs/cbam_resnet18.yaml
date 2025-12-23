@@ -1,16 +1,16 @@
 # ==========================================
-# SE-ResNet18 配置文件
-# 基于：ResNet18 优化版配置
-# 区别：更换了带有注意力机制的模型，关闭了预训练
+# CBAM-ResNet18 配置文件
+# 基于：SE-ResNet18 配置
+# 区别：更换为带有 CBAM (Channel + Spatial Attention) 的模型
 # ==========================================
 
 # ---------- 1. 实验控制参数 ----------
-epochs: 100         # ⚠️ 从头训练(False)比微调(True)需要更多轮次，设为 100
-log_every: 9
+epochs: 100
+log_every: 20
 eval_every: 1
 test_every: 0
-experiment_name: SE_ResNet18_Attention
-work_dir: hagrid_v2/work_dir
+experiment_name: CBAM_ResNet18_Attention
+work_dir: work_dir
 
 # ---------- 2. 早停策略 ---------------
 early_stopping:
@@ -19,16 +19,14 @@ early_stopping:
 
 # --- 3. 数据集配置 (保持不变) ---
 dataset:
-    annotations_train: "annotations_mini/train"
-    annotations_val: "annotations_mini/val"
-    annotations_test: "annotations_mini/test"
+    annotations_train: "hagrid_v2/annotations_mini/train"
+    annotations_val: "hagrid_v2/annotations_mini/val"
+    annotations_test: "hagrid_v2/annotations_mini/test"
 
-    dataset_train: "dataset_mini/train"
-    dataset_val: "dataset_mini/val"
-    dataset_test: "dataset_mini/test"
+    dataset_train: "hagrid_v2/dataset_mini/train"
+    dataset_val: "hagrid_v2/dataset_mini/val"
+    dataset_test: "hagrid_v2/dataset_mini/test"
 
-    # SE-Block 对分辨率不敏感，128 或 224 都可以
-    # 为了 CPU/GPU 都能跑快点，可以用 128；追求精度用 224
     img_size: &img_size 224  
     
     img_mean: &img_mean [0.54, 0.499, 0.474]
@@ -47,22 +45,19 @@ dataset:
         - holy
         - hand_heart
 
-# --- 4. 预处理与增强管道 (保持强增强) ---
-# 注意力机制擅长处理复杂背景，所以强增强(噪声/旋转)对它很有利
+# --- 4. 预处理与增强管道 ---
 train_transforms:
-    #  1. 几何变换：模拟各种手势角度和位置
     HorizontalFlip:
-        p: 0.5   # 50%概率翻转
+        p: 0.5
     
     ShiftScaleRotate:
-        shift_limit: 0.1   #平移
-        scale_limit: 0.1   #缩放
-        rotate_limit: 20   #旋转 +-20度
-        border_mode: 0     #边界填黑
+        shift_limit: 0.1
+        scale_limit: 0.1
+        rotate_limit: 20
+        border_mode: 0
         value: [144,144,144]
         p: 0.5
 
-    # 2. 像素变换：模拟不同画质和光照
     RandomBrightnessContrast:
         p: 0.3
         
@@ -70,7 +65,6 @@ train_transforms:
         var_limit: [10.0, 50.0]
         p: 0.2
 
-    # 3. 基础处理
     LongestMaxSize:      
         max_size: *img_size
         p: 1
@@ -120,15 +114,16 @@ test_transforms:
 
 # --- 5. 模型参数 (🔥 关键修改) ---
 model:
-    name: SE_ResNet18        # ✅ 改成你注册的新名字
-    pretrained: False        # ✅ 必须为 False (结构变了，官方权重不匹配)
+    name: CBAM_ResNet18      # ✅ 使用新注册的 CBAM 模型
+    pretrained: False        # ✅ 必须为 False
     pretrained_backbone: False
     checkpoint: null
-# --- 6. 优化器 (保持 AdamW) ---
+    
+# --- 6. 优化器 ---
 optimizer:
     name: AdamW
     params:
-        lr: 0.001            # 从头训练，学习率保持 0.001 比较合适
+        lr: 0.001
         weight_decay: 0.01
 
 # --- 7. 调度器 ---
@@ -143,19 +138,19 @@ criterion: CrossEntropyLoss
 
 # --- 8. 数据加载参数 ---
 train_params:
-    num_workers: 0           # Windows 安全设置
+    num_workers: 0
     shuffle: True
-    batch_size: 64
+    batch_size: 32
     prefetch_factor: null
 
 test_params:
     num_workers: 0
     shuffle: False
-    batch_size: 64
+    batch_size: 32
     prefetch_factor: null
 
 val_params:
     num_workers: 0
     shuffle: True
-    batch_size: 64
+    batch_size: 32
     prefetch_factor: null
