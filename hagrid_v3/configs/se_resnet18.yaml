@@ -29,7 +29,7 @@ dataset:
 
     # SE-Block 对分辨率不敏感，128 或 224 都可以
     # 为了 CPU/GPU 都能跑快点，可以用 128；追求精度用 224
-    img_size: &img_size 128  
+    img_size: &img_size 224  
     
     img_mean: &img_mean [0.54, 0.499, 0.474]
     img_std: &img_std [0.234, 0.235, 0.231]
@@ -50,17 +50,19 @@ dataset:
 # --- 4. 预处理与增强管道 (保持强增强) ---
 # 注意力机制擅长处理复杂背景，所以强增强(噪声/旋转)对它很有利
 train_transforms:
+    #  1. 几何变换：模拟各种手势角度和位置
     HorizontalFlip:
-        p: 0.5
+        p: 0.5   # 50%概率翻转
     
     ShiftScaleRotate:
-        shift_limit: 0.1
-        scale_limit: 0.1
-        rotate_limit: 20
-        border_mode: 0
+        shift_limit: 0.1   #平移
+        scale_limit: 0.1   #缩放
+        rotate_limit: 20   #旋转 +-20度
+        border_mode: 0     #边界填黑
         value: [144,144,144]
         p: 0.5
 
+    # 2. 像素变换：模拟不同画质和光照
     RandomBrightnessContrast:
         p: 0.3
         
@@ -68,7 +70,8 @@ train_transforms:
         var_limit: [10.0, 50.0]
         p: 0.2
 
-    LongestMaxSize:
+    # 3. 基础处理
+    LongestMaxSize:      
         max_size: *img_size
         p: 1
     PadIfNeeded:
@@ -121,7 +124,6 @@ model:
     pretrained: False        # ✅ 必须为 False (结构变了，官方权重不匹配)
     pretrained_backbone: False
     checkpoint: null
-
 # --- 6. 优化器 (保持 AdamW) ---
 optimizer:
     name: AdamW

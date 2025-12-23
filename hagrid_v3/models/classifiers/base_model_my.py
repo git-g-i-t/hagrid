@@ -60,7 +60,18 @@ class ClassifierModel(HaGRIDModel):
         # 1. 针对 ResNet 系列 (最后一层叫 fc)
         if hasattr(self.hagrid_model, "fc"):
             in_features = self.hagrid_model.fc.in_features
-            self.hagrid_model.fc = nn.Linear(in_features, num_classes)
+            # ❌ 原来的写法 (单层):
+            # self.hagrid_model.fc = nn.Linear(in_features, num_classes)
+            
+            # ✅ 改进后的写法 (MLP Head):
+            # 结构：Linear -> BN -> ReLU -> Dropout -> Linear
+            self.hagrid_model.fc = nn.Sequential(
+                nn.Linear(in_features, 512),        # 降维到 512
+                nn.BatchNorm1d(512),                # 归一化，加速收敛
+                nn.ReLU(inplace=True),              # 激活函数，增加非线性
+                nn.Dropout(p=0.5),                  # 防止过拟合 (关键!)
+                nn.Linear(512, num_classes)         # 最终输出 7 类
+            )
         
         # 2. 针对 MobileNet / VGG / EfficientNet 系列 (最后一层叫 classifier)
         elif hasattr(self.hagrid_model, "classifier"):

@@ -2,7 +2,6 @@ from functools import partial
 from torchvision import models
 
 # 自己写的模型
-from .classifiers.simple_cnn import SimpleCNN  
 from .classifiers.se_resnet import se_resnet18
 from .classifiers.cbam_resnet import cbam_resnet18
 
@@ -19,7 +18,6 @@ detectors_list = {
 # 因为上面的 import 语句已经把 "ClassifierModel" 这个名字
 # 偷梁换柱成了你 base_model_my.py 里的那个新类
 classifiers_list = {
-    "SimpleCNN": partial(ClassifierModel, model=SimpleCNN),
     # 注册 SE-ResNet18
     # 注意：这里我们用 ClassifierModel 包装它，但 model 参数传我们写的函数
     "SE_ResNet18": partial(ClassifierModel, model=se_resnet18),

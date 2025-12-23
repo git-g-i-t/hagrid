@@ -157,6 +157,7 @@ class Trainer:
         n_gpu: int = 1,
         optimizer: torch.optim.Optimizer = None,
         scheduler: torch.optim.lr_scheduler.LRScheduler = None,
+        log_subdir: str = None,  # 新增参数：日志子目录
     ) -> None:
         self.train_data = train_data
         self.test_data = test_data
@@ -208,8 +209,12 @@ class Trainer:
         if not os.path.exists(self.config.work_dir):
             os.mkdir(self.config.work_dir)
         
-        # 初始化 TensorBoard Writer
-        self.summary_writer = SummaryWriter(log_dir=f"{self.config.work_dir}/{self.config.experiment_name}/logs")
+        # 初始化 TensorBoard Writer (自动分流逻辑)
+        log_path = f"{self.config.work_dir}/{self.config.experiment_name}/logs"
+        if log_subdir:
+            log_path = os.path.join(log_path, log_subdir)
+            
+        self.summary_writer = SummaryWriter(log_dir=log_path)
         self.summary_writer.add_text("model/name", self.config.model.name)
 
         # 如果有 Checkpoint，加载断点

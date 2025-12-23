@@ -10,9 +10,11 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 # 格式: "图例上显示的名字": "work_dir/实验文件夹名/logs"
 # 注意：路径必须指向包含 events.out.tfevents... 文件的那个文件夹
 EXPERIMENTS = {
-    "ResNet18_without_pretrained(Baseline)": "work_dir/ResNet18/logs",
-    "ResNet18_with_pretrained": "work_dir/ResNet18_with_pretrained/logs",
-    "SE-ResNet18":        "work_dir/SE_ResNet18_Attention/logs",
+    #"ResNet18_without_pretrained(Baseline)": "work_dir/ResNet18/logs",
+    #"ResNet18_with_pretrained": "work_dir/ResNet18_with_pretrained/logs",
+    "SE-ResNet18_1":        "hagrid_v2/work_dir/SE_ResNet18_Attention/logs/train",
+    #"CBAM-ResNet18":      "hagrid_v2/work_dir/CBAM_ResNet18_Attention/logs/train",
+    "SE-ResNet18_0":        "hagrid_v2/work_dir/SE_ResNet18_Attention/logs",
 }
 
 # 2. 你想画什么指标？(去 TensorBoard 网页版确认一下 Tag 名字)

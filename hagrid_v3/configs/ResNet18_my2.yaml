@@ -9,7 +9,7 @@ log_every: 50       # 建议稍微频繁一点，方便观察
 eval_every: 1
 test_every: 0
 experiment_name: ResNet18
-work_dir: work_dir
+work_dir: hagrid_v2/work_dir
 
 # ---------- 2. 早停策略 ---------------
 early_stopping:
@@ -18,13 +18,13 @@ early_stopping:
 
 # --- 3. 数据集配置 ---
 dataset:
-    annotations_train: "hagrid_v2/annotations_mini/train"
-    annotations_val: "hagrid_v2/annotations_mini/val"
-    annotations_test: "hagrid_v2/annotations_mini/test"
+    annotations_train: "annotations_mini/train"
+    annotations_val: "annotations_mini/val"
+    annotations_test: "annotations_mini/test"
 
-    dataset_train: "hagrid_v2/dataset_mini/train"
-    dataset_val: "hagrid_v2/dataset_mini/val"
-    dataset_test: "hagrid_v2/dataset_mini/test"
+    dataset_train: "dataset_mini/train"
+    dataset_val: "dataset_mini/val"
+    dataset_test: "dataset_mini/test"
 
     img_size: &img_size 224
     img_mean: &img_mean [0.54, 0.499, 0.474]
@@ -128,9 +128,9 @@ test_transforms:
 # --- 5. 模型参数 ---
 model:
     name: ResNet18
-    pretrained: True         # 🔥 必须改为 True，否则强增强下很难收敛
+    pretrained: False         # 🔥 必须改为 True，否则强增强下很难收敛
     pretrained_backbone: True
-    checkpoint: null         # 🔥 新的训练建议设为 null，从头开始跑预训练
+    checkpoint: null        # 🔥 新的训练建议设为 null，从头开始跑预训练
 
 # --- 6. 优化器 (🔥 建议修改) ---
 optimizer:
