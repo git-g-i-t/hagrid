@@ -4,7 +4,7 @@
 1. 解析命令行参数（训练/测试模式、配置文件路径、GPU数量）。
 2. 初始化分布式训练环境（如果使用多 GPU）。
 3. 加载模型、数据集加载器 (DataLoaders)、优化器。
-4. 根据任务类型（检测 vs 分类）选择评估指标（mAP vs F1-Score）。
+4. 选择评估指标F1-Score。
 5. 初始化 Trainer 管理器并执行训练或测试循环。
 """
 import argparse
@@ -12,16 +12,6 @@ from typing import Optional, Tuple
 
 # 配置管理工具
 from omegaconf import OmegaConf
-# PyTorch 分布式训练清理工具
-from torch.distributed import destroy_process_group
-
-# 尝试导入目标检测的评估指标：Mean Average Precision (mAP)
-# try-except 块是为了兼容不同版本的 torchmetrics 库（旧版本可能叫 MAP）
-try:
-    from torchmetrics.detection import MeanAveragePrecision
-except ImportError:
-    from torchmetrics.detection import MAP
-    MeanAveragePrecision = MAP
 
 # 导入自定义工具模块
 
@@ -39,10 +29,10 @@ def parse_arguments(params: Optional[Tuple] = None) -> argparse.Namespace:
 
     # -c / --command: 可选参数，指定运行模式 ，choices=("train", "test") 限制只能输入 train 或 test (默认值为 train)
     parser.add_argument(
-        "-c", "--command", required=False, type=str, default="test", help="Training or test pipeline", choices=("train", "test")
+        "-c", "--command", required=False, type=str, default="train", help="Training or test pipeline", choices=("train", "test")
     )
-    # -p / --path_to_config: 可选参数，YAML 配置文件的路径默认（configs/ResNet18.yaml）改动1.0
-    parser.add_argument("-p", "--path_to_config", required=False, type=str, default="hagrid_v2\configs\cbam_resnet18.yaml   ", help="Path to config")
+    # -p / --path_to_config: 可选参数，YAML 配置文件的路径默认(configs/ResNet18.yaml)
+    parser.add_argument("-p", "--path_to_config", required=False, type=str, default="hagrid_v3\configs\cbam_resnet18.yaml   ", help="Path to config")
     # --n_gpu: 可选参数，指定使用的 GPU 数量，默认为 1
     parser.add_argument("--n_gpu", required=False, type=int, default=1, help="Number of GPUs to use")
 
@@ -65,10 +55,7 @@ def run(args):
     train_dataloader, val_dataloader, test_dataloader, model = load_train_objects(config, args.command, args.n_gpu)
 
     # 4. 根据模型类型选择评估指标 (Metric)
-    if model.type == "detector":
-        # 如果是目标检测模型（如 SSD, YOLO），使用 mAP (Mean Average Precision)
-        metric = MeanAveragePrecision(class_metrics=False)  # class_metrics=False 表示只计算整体 mAP，不分开打印每个类别的 AP
-    else:
+    if model.type == "classifier":
         # 如果是分类模型
         # 根据配置判断是二分类 (binary) 还是多分类 (multiclass)
         task = "binary" if config.dataset.one_class else "multiclass"
@@ -107,11 +94,6 @@ def run(args):
     if args.command == "test":
         # 仅执行测试流程（使用 test_dataloader 评估模型)
         trainer.test()
-
-    # 8. 清理分布式进程组
-    # 如果使用了多卡训练，程序结束前需要销毁进程组以释放资源
-    if args.n_gpu > 1:
-        destroy_process_group()
 
 
 if __name__ == "__main__":

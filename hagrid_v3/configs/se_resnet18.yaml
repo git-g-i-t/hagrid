@@ -10,7 +10,7 @@ log_every: 9
 eval_every: 1
 test_every: 0
 experiment_name: SE_ResNet18_Attention
-work_dir: hagrid_v2/work_dir
+work_dir: hagrid_v3/work_dir
 
 # ---------- 2. 早停策略 ---------------
 early_stopping:

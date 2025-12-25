@@ -82,10 +82,8 @@ def load_train_objects(config: DictConfig, command: str, n_gpu: int):
     # 1. 构建模型结构
     model = build_model(config)
 
-    # 2. 根据模型类型选择对应的数据集类
-    if model.type == "detector":
-        from dataset import DetectionDataset as GestureDataset
-    elif model.type == "classifier":
+    # 2. 选择对应的数据集类
+    if  model.type == "classifier":
         from dataset import ClassificationDataset as GestureDataset
     else:
         raise Exception(f"Model type {model.type} does not exist")

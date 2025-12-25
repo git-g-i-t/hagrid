@@ -2,11 +2,9 @@ from typing import Dict
 
 import torch
 import torch.nn as nn
-from omegaconf import DictConfig
 from torch import Tensor
 
 from models.model import HaGRIDModel
-
 
 class ClassifierModel(HaGRIDModel):
     def __init__(self, model: nn.Module, **kwargs):
@@ -57,7 +55,7 @@ class ClassifierModel(HaGRIDModel):
         if num_classes is None:
             return
 
-        # 1. 针对 ResNet 系列 (最后一层叫 fc)
+        # 针对 ResNet 系列 (最后一层叫 fc)
         if hasattr(self.hagrid_model, "fc"):
             in_features = self.hagrid_model.fc.in_features
             # ❌ 原来的写法 (单层):
@@ -72,31 +70,6 @@ class ClassifierModel(HaGRIDModel):
                 nn.Dropout(p=0.5),                  # 防止过拟合 (关键!)
                 nn.Linear(512, num_classes)         # 最终输出 7 类
             )
-        
-        # 2. 针对 MobileNet / VGG / EfficientNet 系列 (最后一层叫 classifier)
-        elif hasattr(self.hagrid_model, "classifier"):
-            # 如果 classifier 是一个序列 (Sequential)
-            if isinstance(self.hagrid_model.classifier, nn.Sequential):
-                # 找到最后一层线性层
-                last_layer_idx = len(self.hagrid_model.classifier) - 1
-                for i in reversed(range(len(self.hagrid_model.classifier))):
-                    if isinstance(self.hagrid_model.classifier[i], nn.Linear):
-                        last_layer_idx = i
-                        break
-                
-                # 替换它
-                in_features = self.hagrid_model.classifier[last_layer_idx].in_features
-                self.hagrid_model.classifier[last_layer_idx] = nn.Linear(in_features, num_classes)
-            else:
-                # 如果 classifier 只是单个层
-                in_features = self.hagrid_model.classifier.in_features
-                self.hagrid_model.classifier = nn.Linear(in_features, num_classes)
-        
-        # 3. 针对 ViT 系列 (最后一层叫 heads)
-        elif hasattr(self.hagrid_model, "heads"):
-             if hasattr(self.hagrid_model.heads, "head"):
-                in_features = self.hagrid_model.heads.head.in_features
-                self.hagrid_model.heads.head = nn.Linear(in_features, num_classes)
 
     def __call__(self, images: list[Tensor], targets: Dict = None) -> Dict:
         """
@@ -118,7 +91,3 @@ class ClassifierModel(HaGRIDModel):
             target_tensors = torch.stack([target["labels"] for target in targets])
             # self.criterion 在 utils.py 里被赋值为 CrossEntropyLoss
             return self.criterion(output_dict["labels"], target_tensors)
-
-    # 注意：原代码中的 def criterion(...) 其实是个占位符或有逻辑问题
-    # 因为 utils.py 会直接覆盖 self.criterion 属性。
-    # 这里我们不需要显式定义它，留着 self.criterion = None 即可。

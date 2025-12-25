@@ -14,7 +14,7 @@ from omegaconf import DictConfig
 from torchmetrics import F1Score
 from omegaconf import OmegaConf 
 # 导入自定义的模型列表（在 models/__init__.py 中定义）
-from models import classifiers_list, detectors_list
+from models import classifiers_list
 
 TORCH_VERSION = torch.__version__
 
@@ -254,26 +254,8 @@ def build_model(config: DictConfig):
     # 这样无论你以后是用 7 类、18 类还是 34 类，代码都能自动适应，不用再改了
     model_config = {"num_classes": len(config.dataset.targets), "pretrained": config.model.pretrained}
    
-    # 情况 1: 目标检测模型 (如 SSDLite)
-    if model_name in detectors_list:
-        # 检测任务通常需要一个额外的 "背景" 类，所以 +1 (变成 35 类)
-        model_config["num_classes"] += 1
-        # 更新检测模型特有的配置 (输入尺寸、均值方差用于 Backbone 预处理)
-        model_config.update(
-            {
-                "pretrained_backbone": config.model.pretrained_backbone,
-                "img_size": config.dataset.img_size,
-                "img_mean": config.dataset.img_mean,
-                "img_std": config.dataset.img_std,
-            }
-        )
-        # 实例化检测模型
-        model = detectors_list[model_name](**model_config)
-        # 打上标记，后续 load_train_objects 会根据这个标记加载 DetectionDataset
-        model.type = "detector"
-        
-    # 情况 2: 图像分类模型 (如 ResNet, MobileNet)
-    elif model_name in classifiers_list:
+    # 图像分类模型
+    if  model_name in classifiers_list:
         # 实例化分类模型
         model = classifiers_list[model_name](**model_config)
         # 绑定损失函数 (如 CrossEntropyLoss)
