@@ -9,5 +9,3 @@ targets = {
     5: "holy",
     6: "hand_heart",
 }
-
- 
