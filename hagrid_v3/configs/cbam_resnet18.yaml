@@ -117,7 +117,7 @@ model:
     name: CBAM_ResNet18      # ✅ 使用新注册的 CBAM 模型
     pretrained: False        # ✅ 必须为 False
     pretrained_backbone: False
-    checkpoint: null
+    checkpoint: E:\python\hagrid\hagrid_v3\work_dir\CBAM_ResNet18_Attention\CBAM_ResNet18_epoch-29_F1Score-0.78_loss-0.44.pth
 
 # --- 6. 优化器 ---
 optimizer:

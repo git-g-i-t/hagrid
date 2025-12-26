@@ -1,5 +1,5 @@
 from functools import partial
-from torchvision import models
+#from torchvision import models
 
 # 自己写的模型
 from .classifiers.se_resnet import se_resnet18
@@ -18,5 +18,5 @@ classifiers_list = {
     "SE_ResNet18": partial(ClassifierModel, model=se_resnet18),
     "CBAM_ResNet18": partial(ClassifierModel, model=cbam_resnet18),
     # 其他模型
-    "ResNet18": partial(ClassifierModel, models.resnet18),
+    #"ResNet18": partial(ClassifierModel, models.resnet18),
 }
