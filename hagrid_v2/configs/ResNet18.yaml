@@ -142,7 +142,7 @@ model:
     name: ResNet18               # 模型名称
     pretrained: False            # 是否加载 ImageNet 预训练权重
     pretrained_backbone: False
-    checkpoint: null
+    checkpoint: hagrid_v2/work_dir/ResNet18/ResNet18_epoch-25_F1Score-0.67_loss-1.2.pth
 
 # --- 6. 优化器 ---
 optimizer:
