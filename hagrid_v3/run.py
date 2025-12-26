@@ -29,7 +29,7 @@ def parse_arguments(params: Optional[Tuple] = None) -> argparse.Namespace:
 
     # -c / --command: 可选参数，指定运行模式 ，choices=("train", "test") 限制只能输入 train 或 test (默认值为 train)
     parser.add_argument(
-        "-c", "--command", required=False, type=str, default="train", help="Training or test pipeline", choices=("train", "test")
+        "-c", "--command", required=False, type=str, default="test", help="Training or test pipeline", choices=("train", "test")
     )
     # -p / --path_to_config: 可选参数，YAML 配置文件的路径默认(configs/ResNet18.yaml)
     parser.add_argument("-p", "--path_to_config", required=False, type=str, default="hagrid_v3\configs\cbam_resnet18.yaml   ", help="Path to config")

@@ -15,7 +15,6 @@ from tqdm import tqdm
 # 导入支持的图片扩展名
 from constants import IMAGES
 
-
 class HagridDataset(Dataset):
     """
     HaGRID 数据集的基类

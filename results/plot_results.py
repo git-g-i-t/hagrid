@@ -12,9 +12,8 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 EXPERIMENTS = {
     #"ResNet18_without_pretrained(Baseline)": "work_dir/ResNet18/logs",
     #"ResNet18_with_pretrained": "work_dir/ResNet18_with_pretrained/logs",
-    "SE-ResNet18_1":        "hagrid_v2/work_dir/SE_ResNet18_Attention/logs/train",
-    #"CBAM-ResNet18":      "hagrid_v2/work_dir/CBAM_ResNet18_Attention/logs/train",
-    "SE-ResNet18_0":        "hagrid_v2/work_dir/SE_ResNet18_Attention/logs",
+    "SE-ResNet18":        "hagrid_v3/work_dir/SE_ResNet18_Attention/logs/train",
+    "CBAM-ResNet18":      "hagrid_v3/work_dir/CBAM_ResNet18_Attention/logs/train",
 }
 
 # 2. 你想画什么指标？(去 TensorBoard 网页版确认一下 Tag 名字)
