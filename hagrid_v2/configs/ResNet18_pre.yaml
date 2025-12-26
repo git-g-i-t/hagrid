@@ -5,10 +5,10 @@
 
 # ---------- 1. 实验控制参数 ----------
 epochs: 100
-log_every: 50       # 建议稍微频繁一点，方便观察
+log_every: 9       # 建议稍微频繁一点，方便观察
 eval_every: 1
 test_every: 0
-experiment_name: ResNet18
+experiment_name: ResNet18_pre
 work_dir: hagrid_v2/work_dir
 
 # ---------- 2. 早停策略 ---------------

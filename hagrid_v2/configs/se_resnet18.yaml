@@ -19,13 +19,13 @@ early_stopping:
 
 # --- 3. 数据集配置 (保持不变) ---
 dataset:
-    annotations_train: "annotations_mini/train"
-    annotations_val: "annotations_mini/val"
-    annotations_test: "annotations_mini/test"
+    annotations_train: "hagrid_v2/annotations_mini/train"
+    annotations_val: "hagrid_v2/annotations_mini/val"
+    annotations_test: "hagrid_v2/annotations_mini/test"
 
-    dataset_train: "dataset_mini/train"
-    dataset_val: "dataset_mini/val"
-    dataset_test: "dataset_mini/test"
+    dataset_train: "hagrid_v2/dataset_mini/train"
+    dataset_val: "hagrid_v2/dataset_mini/val"
+    dataset_test: "hagrid_v2/dataset_mini/test"
 
     # SE-Block 对分辨率不敏感，128 或 224 都可以
     # 为了 CPU/GPU 都能跑快点，可以用 128；追求精度用 224
@@ -123,7 +123,7 @@ model:
     name: SE_ResNet18        # ✅ 改成你注册的新名字
     pretrained: False        # ✅ 必须为 False (结构变了，官方权重不匹配)
     pretrained_backbone: False
-    checkpoint: null
+    checkpoint: hagrid_v2\work_dir\SE_ResNet18_Attention\SE_ResNet18_epoch-20_F1Score-0.83_loss-0.79.pth
 # --- 6. 优化器 (保持 AdamW) ---
 optimizer:
     name: AdamW

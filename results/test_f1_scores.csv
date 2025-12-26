@@ -1,0 +1,4 @@
+Model,F1_Score
+SE-ResNet18,0.833333
+CBAM-ResNet18,0.866667
+ResNet18_without_pretrained,0.800000
