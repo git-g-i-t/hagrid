@@ -40,7 +40,7 @@ def run(args):
     主执行函数
     """
     # 1. 设置 MindSpore 运行上下文
-    # 既然是 Windows CPU 环境，我们设置为 GRAPH_MODE 以获得更好的性能
+    # 既然是 Windows CPU 环境，设置为 GRAPH_MODE 以获得更好的性能
     ms.set_context(mode=ms.GRAPH_MODE)
     ms.set_device("CPU")
 

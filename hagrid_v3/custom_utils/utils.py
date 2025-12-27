@@ -50,7 +50,7 @@ class F1ScoreWithLogging:
         self.all_preds.extend(y_pred)
         self.all_labels.extend(target)
 
-        # 进度条上显示 Accuracy 比显示错误的 Batch-F1 更有意义
+        # 进度条上显示 Accuracy
         batch_acc = np.mean(y_pred == target)
         return {"Accuracy": float(batch_acc)}
 
@@ -126,7 +126,7 @@ class MetricAverager:
 
     def update(self, values: Dict):
         for key, value in values.items():
-            # MindSpore Tensor 转 float 使用 .asnumpy().item() 或直接 float()
+            # MindSpore Tensor 转 float 使用float()
             val = float(value) if isinstance(value, (Tensor, np.ndarray)) else value
             self.current_total[key] += val
         self.iterations += 1
@@ -172,7 +172,6 @@ def get_transform(transform_config: DictConfig, model_type: str):
         transforms_list.append(getattr(A, key)(**real_params))
 
     # 移除 ToTensorV2()，保持输出为 Numpy 数组格式
-    # transforms_list.append(ToTensorV2())
 
     if model_type == "detector":
         return A.Compose(

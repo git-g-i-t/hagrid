@@ -232,11 +232,11 @@ class Trainer:
             # 4. 核心保存逻辑：使用修正后的 F1Score 进行比较
             current_f1 = self.current_state["metric"][self.metric_name]
             best_f1 = self.best_state["metric"][self.metric_name]
-            
+
             if (current_f1 - best_f1) > self.config.early_stopping.metric:
                 print(f"性能提升！F1 从 {best_f1:.4f} 提升至 {current_f1:.4f}，正在保存模型...")
                 self.best_state.update({
-                    "metric": self.current_state["metric"], 
+                    "metric": self.current_state["metric"].copy(), 
                     "loss": self.current_state["loss"], 
                     "epoch": self.current_state["epoch"]
                 })
@@ -269,6 +269,7 @@ class Trainer:
 
             if self.config.eval_every > 0 and epoch % self.config.eval_every == 0:
                 self.val()
+
     def _load_snapshot(self, snapshot_path):
         """
         加载 MindSpore 权重文件 (.ckpt) 并检查匹配情况

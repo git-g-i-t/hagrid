@@ -41,7 +41,7 @@ class HagridDataset: # 移除了 Dataset 继承
         rel_path_json = self.conf.dataset.get(f"annotations_{dataset_type}")
         rel_path_data = self.conf.dataset.get(f"dataset_{dataset_type}")
 
-        # 动态拼接成绝对路径，这样给别人时也能自动对齐
+        # 动态拼接成绝对路径
         self.path_to_json = os.path.join(project_root, rel_path_json)
         self.path_to_dataset = os.path.join(project_root, rel_path_data)
         # --- 路径自动化处理结束 ---

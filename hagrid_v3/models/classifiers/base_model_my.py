@@ -1,11 +1,10 @@
-# f:/hagrid/hagrid_v3/models/classifiers/base_model_my.py
 import mindspore as ms
 from mindspore import nn, ops, Tensor
 from typing import Dict, List
 from models.model import HaGRIDModel
 
 class ClassifierModel(HaGRIDModel):
-    # ✅ 修改点：参数名改为 model，与 partial 风格对齐
+    # 参数名为 model，与 partial 风格对齐
     def __init__(self, model, num_classes=7, **kwargs):
         super().__init__()
         
@@ -15,7 +14,7 @@ class ClassifierModel(HaGRIDModel):
         self.type = "classifier"
 
     def __call__(self, images, targets=None) -> Dict:
-        # 保持之前修复好的维度检查逻辑
+        # 保持维度检查逻辑
         if isinstance(images, (list, tuple)):
             image_tensors = ops.stack(images)
         elif isinstance(images, ms.Tensor) and images.ndim == 4:

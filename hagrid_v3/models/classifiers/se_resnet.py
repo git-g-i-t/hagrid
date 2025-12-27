@@ -89,7 +89,7 @@ class SEResNet(nn.Cell):
         self.inplanes = 64
         
         # --- 骨干网络 ---
-        # 注意：padding=3 且 pad_mode='pad' 才能对齐 PyTorch
+        # padding=3 且 pad_mode='pad' 才能对齐 PyTorch
         self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, 
                                pad_mode='pad', padding=3, has_bias=False)
         self.bn1 = self._norm_layer(self.inplanes)

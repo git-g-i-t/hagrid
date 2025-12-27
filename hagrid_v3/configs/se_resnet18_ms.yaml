@@ -10,12 +10,12 @@ log_every: 9        # 每 9 个 batch 打印一次日志
 eval_every: 1       # 每个 epoch 进行一次验证
 test_every: 0       # 暂时不运行独立测试
 experiment_name: SE_ResNet18_Attention
-# 建议使用相对路径，由代码内部自动拼接为绝对路径
+# 使用相对路径，由代码内部自动拼接为绝对路径
 work_dir: "hagrid_v3/work_dir"
 
 # ---------- 2. 早停策略 ---------------
 early_stopping:
-    epochs: 10      # 15个epoch指标不提升则停止
+    epochs: 10      # 10个epoch指标不提升则停止
     metric: 0.01    # 提升阈值
 
 # ---------- 3. 数据集配置 ----------
@@ -38,7 +38,7 @@ dataset:
     subset: -1       # -1 表示使用全部数据，调试时可设为 100
     one_class: False
 
-    # 你的 7 个类别列表（顺序必须固定）
+    # 7 个类别列表（顺序必须固定）
     targets:
         - call
         - ok
@@ -117,7 +117,7 @@ model:
     pretrained: False        
     pretrained_backbone: False
     # 放入需要测试的模型权重文件路径
-    checkpoint: null
+    checkpoint: hagrid_v3\work_dir\SE_ResNet18_Attention\SE_ResNet18_epoch-2_F1Score-0.56_loss-0.46.ckpt
 # ---------- 6. 优化器 (适配 MindSpore AdamWeightDecay) ----------
 optimizer:
     name: AdamW              # 代码会自动映射到 ms.nn.AdamWeightDecay
