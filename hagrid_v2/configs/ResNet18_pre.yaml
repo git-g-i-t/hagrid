@@ -18,13 +18,13 @@ early_stopping:
 
 # --- 3. 数据集配置 ---
 dataset:
-    annotations_train: "annotations_mini/train"
-    annotations_val: "annotations_mini/val"
-    annotations_test: "annotations_mini/test"
+    annotations_train: "hagrid_v2/annotations_mini/train"
+    annotations_val: "hagrid_v2/annotations_mini/val"
+    annotations_test: "hagrid_v2/annotations_mini/test"
 
-    dataset_train: "dataset_mini/train"
-    dataset_val: "dataset_mini/val"
-    dataset_test: "dataset_mini/test"
+    dataset_train: "hagrid_v2/dataset_mini/train"
+    dataset_val: "hagrid_v2/dataset_mini/val"
+    dataset_test: "hagrid_v2/dataset_mini/test"
 
     img_size: &img_size 224
     img_mean: &img_mean [0.54, 0.499, 0.474]
@@ -130,7 +130,7 @@ model:
     name: ResNet18
     pretrained: True         # 🔥 必须改为 True，否则强增强下很难收敛
     pretrained_backbone: True
-    checkpoint: null        # 🔥 新的训练建议设为 null，从头开始跑预训练
+    checkpoint: hagrid_v2\work_dir\ResNet18_pre\ResNet18_epoch-15_F1Score-1.0_loss-0.059.pth       
 
 # --- 6. 优化器 (🔥 建议修改) ---
 optimizer:

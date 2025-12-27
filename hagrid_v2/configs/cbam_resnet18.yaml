@@ -19,14 +19,13 @@ early_stopping:
 
 # --- 3. 数据集配置 (保持不变) ---
 dataset:
-    annotations_train: "annotations_mini/train"
-    annotations_val: "annotations_mini/val"
-    annotations_test: "annotations_mini/test"
+    annotations_train: "hagrid_v2/annotations_mini/train"
+    annotations_val: "hagrid_v2/annotations_mini/val"
+    annotations_test: "hagrid_v2/annotations_mini/test"
 
-    dataset_train: "dataset_mini/train"
-    dataset_val: "dataset_mini/val"
-    dataset_test: "dataset_mini/test"
-
+    dataset_train: "hagrid_v2/dataset_mini/train"
+    dataset_val: "hagrid_v2/dataset_mini/val"
+    dataset_test: "hagrid_v2/dataset_mini/test"
     img_size: &img_size 224  
 
     img_mean: &img_mean [0.54, 0.499, 0.474]
@@ -117,7 +116,7 @@ model:
     name: CBAM_ResNet18      # ✅ 使用新注册的 CBAM 模型
     pretrained: False        # ✅ 必须为 False
     pretrained_backbone: False
-    checkpoint: null
+    checkpoint: hagrid_v2\work_dir\CBAM_ResNet18_Attention\CBAM_ResNet18_epoch-29_F1Score-0.78_loss-0.44.pth
 
 # --- 6. 优化器 ---
 optimizer:

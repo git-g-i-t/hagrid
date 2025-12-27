@@ -88,7 +88,7 @@ class HagridDataset(Dataset):
         """
         exists_images = set() # 使用集合(set)存储存在的文件名，查询速度更快
         annotations_all = []
-
+        
         for target in tqdm(self.conf.dataset.targets, desc=f"Prepare {self.dataset_type} dataset"):
             target_tsv = os.path.join(self.path_to_json, f"{target}.json")
             if os.path.exists(target_tsv):
@@ -111,6 +111,7 @@ class HagridDataset(Dataset):
                 # 扫描该类别下的实际图片文件
                 exists_images.update(self.__get_files_from_dir(os.path.join(self.path_to_dataset, target), IMAGES))
             else:
+                print(f"[失败] 没找到文件: {target_tsv}")
                 logging.info(f"Database for {target} not found")
 
         # 合并所有类别的 DataFrame

@@ -36,10 +36,10 @@ def get_args():
     # ========================================================
     # ✨ 在这里修改你的默认路径和参数 ✨
     # ========================================================
-    DEFAULT_CONFIG = "hagrid_v2\\configs\\ResNet18_my2.yaml"      # 配置文件路径
+    DEFAULT_CONFIG = "hagrid_v2\\configs\\cbam_resnet18.yaml"      # 配置文件路径
     DEFAULT_CHECKPOINT = "hagrid_v2\\work_dir\\CBAM_ResNet18_Attention\\CBAM_ResNet18_epoch-29_F1Score-0.78_loss-0.44.pth"              # 权重文件路径
     DEFAULT_IMAGE_DIR = "hagrid_v2/dataset_mini/test"          # 测试图片文件夹
-    DEFAULT_OUTPUT_DIR = "results/gradcam/ResNet18_with_pretrained"                    # 结果保存路径
+    DEFAULT_OUTPUT_DIR = "results/gradcam/cbam_resnet18"                    # 结果保存路径
     DEFAULT_TARGET_LAYER = "layer4"                           # 目标卷积层
     DEFAULT_NUM_IMAGES = 5                                    # 默认处理图片张数
     # ========================================================
