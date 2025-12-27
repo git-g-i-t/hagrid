@@ -135,7 +135,7 @@ def load_train_optimizer(model: HaGRIDModel, config: DictConfig):
         try:
             scheduler = getattr(torch.optim.lr_scheduler, config.scheduler.name)(optimizer, **config.scheduler.params)
         except AttributeError:
-            print(f"⚠️  调度器 {config.scheduler.name} 不存在，使用默认 StepLR")
+            print(f"调度器 {config.scheduler.name} 不存在，使用默认 StepLR")
             scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
     else:
         scheduler = None
@@ -165,7 +165,7 @@ class Trainer:
         
         # 设备设置
         self.device = get_available_device()
-        print(f"🎯 使用设备: {self.device}")
+        print(f"使用设备: {self.device}")
         
         self.model = model
         self.model.to(self.device)
@@ -201,8 +201,8 @@ class Trainer:
         try:
             self.metric_calculator = metric_calculator.to(self.device)
         except Exception as e:
-            print(f"⚠️  评估指标计算器移动设备失败: {e}")
-            print("⚠️  评估指标计算器将保持在原设备")
+            print(f"评估指标计算器移动设备失败: {e}")
+            print("评估指标计算器将保持在原设备")
             self.metric_calculator = metric_calculator
 
         # 初始化日志记录器和文件夹
@@ -239,7 +239,7 @@ class Trainer:
             "Metric": self.best_state["metric"],
         }
         save_path = os.path.join(self.config.work_dir, self.config.experiment_name)
-        # 文件名包含 epoch, metric 分数和 loss，方便查看    1.0这里改了一下，windows不能使用：，换成了_
+        # 文件名包含 epoch, metric 分数和 loss，方便查看
         save_name = f"{self.config.model.name}_epoch-{self.best_state['epoch']}_{self.metric_name}-{metric_score:.2}_loss-{self.best_state['loss']:.2}.pth"
         if not os.path.exists(save_path):
             os.mkdir(save_path)

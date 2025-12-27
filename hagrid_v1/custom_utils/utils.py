@@ -55,14 +55,14 @@ class F1ScoreWithLogging:
         # 如果请求的是 CUDA 但不可用，自动降级到 CPU
         if "cuda" in str(device) and not torch.cuda.is_available():
             device = "cpu"
-            print(f"⚠️  评估指标计算器: CUDA 不可用，自动切换到 {device}")
+            print(f"评估指标计算器: CUDA 不可用，自动切换到 {device}")
         
         try:
             self.f1_score = self.f1_score.to(device)
             self.device = device
         except Exception as e:
-            print(f"⚠️  评估指标计算器移动设备失败: {e}")
-            print("⚠️  评估指标计算器将保持在原设备")
+            print(f"评估指标计算器移动设备失败: {e}")
+            print("评估指标计算器将保持在原设备")
         
         return self
 
@@ -80,7 +80,7 @@ class F1ScoreWithLogging:
         # 将 target 列表堆叠成 Tensor
         target = torch.stack([target["labels"] for target in targets])
         
-        # 获取预测的类别索引    调试1.0
+        # 获取预测的类别索引
         pred_labels = preds["labels"].to(self.device).argmax(1)
         
         # =========== 🕵️‍♂️ 调试代码开始 (调试完后可删除) ===========
@@ -247,12 +247,9 @@ def build_model(config: DictConfig):
     根据配置文件中的 model.name 实例化对应的模型。
     """
     model_name = config.model.name
-   
-    # 🔴 删除这一行 (或者注释掉)
-    # model_config = {"num_classes": 34, "pretrained": config.model.pretrained}
     
-    # 🟢 替换为这一行 (动态获取类别数量)
-    # 这样无论你以后是用 7 类、18 类还是 34 类，代码都能自动适应，不用再改了
+    #  (动态获取类别数量)
+    # 这样无论以后是用 7 类、18 类还是 34 类，代码都能自动适应，不用再改了
     model_config = {"num_classes": len(config.dataset.targets), "pretrained": config.model.pretrained}
    
     # 情况 1: 目标检测模型 (如 SSDLite)

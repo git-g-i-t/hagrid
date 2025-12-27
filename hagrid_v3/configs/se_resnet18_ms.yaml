@@ -15,7 +15,7 @@ work_dir: "hagrid_v3/work_dir"
 
 # ---------- 2. 早停策略 ---------------
 early_stopping:
-    epochs: 15      # 15个epoch指标不提升则停止
+    epochs: 10      # 15个epoch指标不提升则停止
     metric: 0.01    # 提升阈值
 
 # ---------- 3. 数据集配置 ----------
@@ -117,7 +117,7 @@ model:
     pretrained: False        
     pretrained_backbone: False
     # 放入需要测试的模型权重文件路径
-    checkpoint: hagrid_v3\work_dir\SE_ResNet18_Attention\SE_ResNet18_epoch-77_F1Score-0.65_loss-0.17.ckpt
+    checkpoint: null
 # ---------- 6. 优化器 (适配 MindSpore AdamWeightDecay) ----------
 optimizer:
     name: AdamW              # 代码会自动映射到 ms.nn.AdamWeightDecay

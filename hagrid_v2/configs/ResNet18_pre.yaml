@@ -18,13 +18,13 @@ early_stopping:
 
 # --- 3. 数据集配置 ---
 dataset:
-    annotations_train: "hagrid_v2/annotations_mini/train"
-    annotations_val: "hagrid_v2/annotations_mini/val"
-    annotations_test: "hagrid_v2/annotations_mini/test"
+    annotations_train: "annotations_mini/train"
+    annotations_val: "annotations_mini/val"
+    annotations_test: "annotations_mini/test"
 
-    dataset_train: "hagrid_v2/dataset_mini/train"
-    dataset_val: "hagrid_v2/dataset_mini/val"
-    dataset_test: "hagrid_v2/dataset_mini/test"
+    dataset_train: "dataset_mini/train"
+    dataset_val: "dataset_mini/val"
+    dataset_test: "dataset_mini/test"
 
     img_size: &img_size 224
     img_mean: &img_mean [0.54, 0.499, 0.474]
@@ -33,7 +33,7 @@ dataset:
     subset: -1
     one_class: False
 
-    # 你的 8 个类别
+    # 7个类别
     targets:
         - call
         - ok
@@ -43,7 +43,7 @@ dataset:
         - holy
         - hand_heart
 
-# --- 4. 预处理与增强管道 (🔥 重点修改区域) ---
+# --- 4. 预处理与增强管道  ---
 train_transforms:
     # 1. 几何变换：模拟各种手势角度和位置
     HorizontalFlip:
@@ -91,7 +91,7 @@ train_transforms:
         max_pixel_value: 255.0
         p: 1
 
-# 验证集保持干净 (不要改动)
+# 验证集保持干净 
 val_transforms:
     LongestMaxSize:
         max_size: *img_size
@@ -128,13 +128,14 @@ test_transforms:
 # --- 5. 模型参数 ---
 model:
     name: ResNet18
-    pretrained: True         # 🔥 必须改为 True，否则强增强下很难收敛
+    pretrained: True         # 改为 True开启预训练
     pretrained_backbone: True
-    checkpoint: hagrid_v2\work_dir\ResNet18_pre\ResNet18_epoch-15_F1Score-1.0_loss-0.059.pth       
+    #模型路径
+    checkpoint: hagrid_v2\work_dir\ResNet18_pre\ResNet18_epoch-7_F1Score-1.0_loss-0.18.pth
 
-# --- 6. 优化器 (🔥 建议修改) ---
+# --- 6. 优化器 ---
 optimizer:
-    name: AdamW              # 🔥 换用 AdamW，比 SGD 更适合处理复杂增强
+    name: AdamW              # 换用 AdamW，比 SGD 更适合处理复杂增强
     params:
         lr: 0.0005           # 学习率给小一点 (0.001 -> 0.0005)
         weight_decay: 0.01   # 增加权重衰减，防止过拟合
@@ -152,9 +153,9 @@ criterion: CrossEntropyLoss
 
 # --- 9. 数据加载参数 (针对 GPU 优化) ---
 train_params:
-    num_workers: 4      # 🔥 如果是 GPU，尝试开到 4 (Windows若报错则改回0)
+    num_workers: 4      # 如果是 GPU，尝试开到 4 (Windows若报错则改回0)
     shuffle: True
-    batch_size: 64      # 🔥 显存允许的话，开大一点 (32 -> 64)
+    batch_size: 64      # 显存允许的话，开大一点 (32 -> 64)
     prefetch_factor: 2  # 配合 num_workers > 0
 
 test_params:
@@ -165,6 +166,6 @@ test_params:
 
 val_params:
     num_workers: 4
-    shuffle: True       # 🔥 必须为 True
+    shuffle: True       # 必须为 True
     batch_size: 64
     prefetch_factor: 2

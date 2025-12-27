@@ -135,7 +135,7 @@ def load_train_optimizer(model: HaGRIDModel, config: DictConfig):
         try:
             scheduler = getattr(torch.optim.lr_scheduler, config.scheduler.name)(optimizer, **config.scheduler.params)
         except AttributeError:
-            print(f"⚠️  调度器 {config.scheduler.name} 不存在，使用默认 StepLR")
+            print(f"调度器 {config.scheduler.name} 不存在，使用默认 StepLR")
             scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
     else:
         scheduler = None
@@ -164,7 +164,7 @@ class Trainer:
         
         # 设备设置
         self.device = get_available_device()
-        print(f"🎯 使用设备: {self.device}")
+        print(f"使用设备: {self.device}")
         
         self.model = model
         self.model.to(self.device)
@@ -201,7 +201,7 @@ class Trainer:
             self.metric_calculator = metric_calculator.to(self.device)
         except Exception as e:
             print(f"⚠️  评估指标计算器移动设备失败: {e}")
-            print("⚠️  评估指标计算器将保持在原设备")
+            print("评估指标计算器将保持在原设备")
             self.metric_calculator = metric_calculator
 
         # 初始化日志记录器和文件夹

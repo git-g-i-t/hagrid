@@ -23,14 +23,14 @@ class HaGRIDModel:
         # 如果请求的是 CUDA 但不可用，自动降级到 CPU
         if "cuda" in str(device) and not torch.cuda.is_available():
             device = "cpu"
-            print(f"⚠️  CUDA 不可用，自动切换到 {device}")
+            print(f"CUDA 不可用，自动切换到 {device}")
         
         self.device = device
         self.hagrid_model = self.hagrid_model.to(device)
         
         # 可选：打印设备信息
         if hasattr(self.hagrid_model, 'device'):
-            print(f"✅ 模型已移动到设备: {device}")
+            print(f"模型已移动到设备: {device}")
         
         return self  # 保持链式调用兼容性
 

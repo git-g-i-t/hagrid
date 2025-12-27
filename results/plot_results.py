@@ -8,8 +8,8 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 
 # 1. 定义你的实验名称和对应的路径
 EXPERIMENTS = {
-    "ResNet18_without_pretrained(Baseline)": "hagrid_v2/work_dir/ResNet18_base/logs/train",
-    #"ResNet18_with_Data_Augmentation(Baseline_1)": "hagrid_v2/work_dir/ResNet18/logs/train",
+    "ResNet18_without_pretrained(Baseline)": "hagrid_v1/work_dir/ResNet18/logs",
+    "ResNet18_with_Data_Augmentation(Baseline_1)": "hagrid_v2/work_dir/ResNet18_base/logs/train",
     "ResNet18_with_pretrained": "hagrid_v2/work_dir/ResNet18_pre/logs/train",
     "SE-ResNet18":        "hagrid_v2/work_dir/SE_ResNet18_Attention/logs/train",
     "CBAM-ResNet18":      "hagrid_v2/work_dir/CBAM_ResNet18_Attention/logs/train",

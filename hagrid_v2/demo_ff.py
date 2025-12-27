@@ -49,7 +49,7 @@ class Demo:
         """
         # 应用定义好的变换
         transformed_image = transform(image=img)
-        #注意：这里不需要返回图片的宽高尺寸，因为不需要像检测任务那样还原Box坐标
+        #这里不需要返回图片的宽高尺寸，因为不需要像检测任务那样还原Box坐标
         return transformed_image["image"]
 
     @staticmethod

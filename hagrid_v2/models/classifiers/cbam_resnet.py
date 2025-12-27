@@ -77,7 +77,7 @@ class CBAMBasicBlock(nn.Module):
         self.conv2 = conv3x3(planes, planes)
         self.bn2 = norm_layer(planes)
 
-        # 🔥 插入 CBAM 模块 🔥
+        # 插入 CBAM 模块 
         self.ca = ChannelAttention(planes)
         self.sa = SpatialAttention()
 
@@ -94,7 +94,7 @@ class CBAMBasicBlock(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
 
-        # 🔥 CBAM 推理逻辑：先通道，后空间 🔥
+        # CBAM 推理逻辑：先通道，后空间 
         # 1. Channel Attention
         out = self.ca(out) * out
         # 2. Spatial Attention

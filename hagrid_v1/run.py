@@ -12,7 +12,7 @@ from typing import Optional, Tuple
 
 # 配置管理工具
 from omegaconf import OmegaConf
-# PyTorch 分布式训练清理工具     小吴有话说：这里只针对多gpu需要使用，还显示未解析的引用，我觉得可以直接删除相关内容
+# PyTorch 分布式训练清理工具
 from torch.distributed import destroy_process_group
 
 # 尝试导入目标检测的评估指标：Mean Average Precision (mAP)
@@ -38,11 +38,11 @@ def parse_arguments(params: Optional[Tuple] = None) -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(description="Gesture classifier...")
 
-    # -c / --command: 可选参数，指定运行模式 ，choices=("train", "test") 限制只能输入 train 或 test (默认值为 train)
+    # -c / --command: 可选参数，指定运行模式 ，choices=("train", "test") 限制只能输入 train 或 test (默认值为 test)
     parser.add_argument(
-        "-c", "--command", required=False, type=str, default="train", help="Training or test pipeline", choices=("train", "test")
+        "-c", "--command", required=False, type=str, default="test", help="Training or test pipeline", choices=("train", "test")
     )
-    # -p / --path_to_config: 可选参数，YAML 配置文件的路径默认(configs/ResNet18_my.yaml)
+    # -p / --path_to_config: 可选参数，YAML 配置文件的路径默认(configs\ResNet18_my.yaml)
     parser.add_argument("-p", "--path_to_config", required=False, type=str, default="hagrid_v1\configs\ResNet18_my.yaml", help="Path to config")
     # --n_gpu: 可选参数，指定使用的 GPU 数量，默认为 1
     parser.add_argument("--n_gpu", required=False, type=int, default=1, help="Number of GPUs to use")
@@ -58,7 +58,7 @@ def run(args):
     # 1. 加载 YAML 配置文件
     config = OmegaConf.load(args.path_to_config)
 
-    # 2. 如果 GPU 数量大于 1，初始化分布式训练环境 (DDP)       应该用不上
+    # 2. 如果 GPU 数量大于 1，初始化分布式训练环境 (DDP)
     if args.n_gpu > 1:
         ddp_setup()
 

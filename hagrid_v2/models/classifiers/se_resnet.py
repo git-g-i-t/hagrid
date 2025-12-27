@@ -40,7 +40,7 @@ class SEBasicBlock(nn.Module):
         self.conv2 = conv3x3(planes, planes)
         self.bn2 = norm_layer(planes)
         
-        # 🔥 插入 SE 注意力模块 🔥
+        # 插入 SE 注意力模块 
         self.se = SELayer(planes)
         
         self.downsample = downsample
@@ -56,7 +56,7 @@ class SEBasicBlock(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
 
-        # 🔥 在残差连接之前，先过注意力模块
+        # 在残差连接之前，先过注意力模块
         out = self.se(out)
 
         if self.downsample is not None:

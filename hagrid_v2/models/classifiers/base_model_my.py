@@ -60,10 +60,8 @@ class ClassifierModel(HaGRIDModel):
         # 1. 针对 ResNet 系列 (最后一层叫 fc)
         if hasattr(self.hagrid_model, "fc"):
             in_features = self.hagrid_model.fc.in_features
-            # ❌ 原来的写法 (单层):
-            # self.hagrid_model.fc = nn.Linear(in_features, num_classes)
             
-            # ✅ 改进后的写法 (MLP Head):
+            # 改进后的写法 (MLP Head):
             # 结构：Linear -> BN -> ReLU -> Dropout -> Linear
             self.hagrid_model.fc = nn.Sequential(
                 nn.Linear(in_features, 512),        # 降维到 512
@@ -119,6 +117,6 @@ class ClassifierModel(HaGRIDModel):
             # self.criterion 在 utils.py 里被赋值为 CrossEntropyLoss
             return self.criterion(output_dict["labels"], target_tensors)
 
-    # 注意：原代码中的 def criterion(...) 其实是个占位符或有逻辑问题
+    # 原代码中的 def criterion(...) 其实是个占位符或有逻辑问题
     # 因为 utils.py 会直接覆盖 self.criterion 属性。
     # 这里我们不需要显式定义它，留着 self.criterion = None 即可。
