@@ -5,17 +5,16 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-import torch
+import mindspore as ms # 替代 torch
 from omegaconf import DictConfig
 from PIL import Image
-# PyTorch 的 Dataset 基类，所有自定义数据集都要继承它
-from torch.utils.data import Dataset
+# PyTorch 的 Dataset 基类移除，MindSpore 只需要类实现 __getitem__ 和 __len__
 from tqdm import tqdm
 
 # 导入支持的图片扩展名
 from constants import IMAGES
 
-class HagridDataset(Dataset):
+class HagridDataset: # 移除了 Dataset 继承
     """
     HaGRID 数据集的基类
     负责初始化配置、读取 JSON 标注文件、过滤无效图片等通用操作。
@@ -33,7 +32,19 @@ class HagridDataset(Dataset):
             数据增强和预处理管道
         """
         self.conf = conf
+        # --- 路径自动化处理开始 ---
+        # 获取当前脚本所在目录的上一级，即项目根目录 F:/hagrid
+        # __file__ 是 dataset.py 的路径，dirname 是 hagrid_v3，再 dirname 就是 HAGRID 根目录
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         
+        # 获取配置中的相对路径
+        rel_path_json = self.conf.dataset.get(f"annotations_{dataset_type}")
+        rel_path_data = self.conf.dataset.get(f"dataset_{dataset_type}")
+
+        # 动态拼接成绝对路径，这样给别人时也能自动对齐
+        self.path_to_json = os.path.join(project_root, rel_path_json)
+        self.path_to_dataset = os.path.join(project_root, rel_path_data)
+        # --- 路径自动化处理结束 ---
         # 构建类别映射字典：例如 {'call': 0, 'like': 1, ...}
         # 这对于将字符串标签转换为模型需要的数字 ID 至关重要
         self.labels = {
@@ -145,7 +156,7 @@ class ClassificationDataset(HagridDataset):
         ]
         self.dataset_type = dataset_type
 
-    def __getitem__(self, index: int) -> Tuple[Image.Image, Dict]:
+    def __getitem__(self, index: int) -> Tuple[np.ndarray, Dict]:
         """
         获取单条分类数据
         """
@@ -169,8 +180,9 @@ class ClassificationDataset(HagridDataset):
                     break
         
         try:
-            # 将字符串标签转换为数字 ID，并转为 Tensor
-            label = {"labels": torch.tensor(self.labels[gesture])}
+            # 迁移点：torch.tensor -> np.array
+            # 保持字典输出逻辑不变
+            label = {"labels": np.array(self.labels[gesture], dtype=np.int32)}
         except Exception:
             raise f"unknown gesture {gesture}"
             
@@ -178,6 +190,8 @@ class ClassificationDataset(HagridDataset):
         image = np.array(image)
         if self.transform is not None:
             # 分类任务只需要变换 Image，不需要管 BBox
+            # 这里调用 albumentations，由于环境已好，逻辑完全不需要动
             image = self.transform(image=image)["image"]
-
+            
+        image = image.transpose(2, 0, 1).astype(np.float32)
         return image, label

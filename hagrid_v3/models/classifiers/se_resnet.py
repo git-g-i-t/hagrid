@@ -1,30 +1,45 @@
-import torch
-import torch.nn as nn
-from torchvision.models.resnet import conv3x3, conv1x1
+import numpy as np
+import mindspore as ms
+import mindspore.nn as nn
+from mindspore import ops
+from mindspore.common.initializer import Normal, Constant, HeNormal
+
+# 辅助函数：卷积层定义（对齐 PyTorch 的默认行为）
+def conv3x3(in_planes, out_planes, stride=1):
+    """3x3 convolution with padding"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
+                     pad_mode='pad', padding=1, has_bias=False)
+
+def conv1x1(in_planes, out_planes, stride=1):
+    """1x1 convolution"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride,
+                     pad_mode='pad', padding=0, has_bias=False)
 
 # 1. 定义注意力模块 (SE-Block)
-class SELayer(nn.Module):
+class SELayer(nn.Cell):
     def __init__(self, channel, reduction=16):
         super(SELayer, self).__init__()
         # Squeeze: 全局平均池化
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        # Excitation: 两个全连接层，先降维再升维，学习通道权重
-        self.fc = nn.Sequential(
-            nn.Linear(channel, channel // reduction, bias=False),
-            nn.ReLU(inplace=True),
-            nn.Linear(channel // reduction, channel, bias=False),
-            nn.Sigmoid() # 输出 0~1 之间的权重
-        )
+        # Excitation: 两个全连接层
+        # MindSpore 中 Linear 对应 nn.Dense
+        self.fc = nn.SequentialCell([
+            nn.Dense(channel, channel // reduction, has_bias=False),
+            nn.ReLU(),
+            nn.Dense(channel // reduction, channel, has_bias=False),
+            nn.Sigmoid()
+        ])
 
-    def forward(self, x):
-        b, c, _, _ = x.size()
-        y = self.avg_pool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
-        # 将权重乘回原始特征图
-        return x * y.expand_as(x)
+    def construct(self, x):
+        b, c, _, _ = x.shape
+        # view(b, c) 对应 reshape(b, c)
+        y = self.avg_pool(x).reshape(b, c)
+        y = self.fc(y).reshape(b, c, 1, 1)
+        # 权重乘回原始特征图，MindSpore 自动处理广播机制
+        return x * y
 
 # 2. 定义带有注意力的残差块 (SE-BasicBlock)
-class SEBasicBlock(nn.Module):
+class SEBasicBlock(nn.Cell):
     expansion = 1
 
     def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1,
@@ -33,20 +48,19 @@ class SEBasicBlock(nn.Module):
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         
-        # 标准 ResNet 卷积部分
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = norm_layer(planes)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU()
         self.conv2 = conv3x3(planes, planes)
         self.bn2 = norm_layer(planes)
         
-        # 🔥 插入 SE 注意力模块 🔥
+        # SE 注意力模块
         self.se = SELayer(planes)
         
         self.downsample = downsample
         self.stride = stride
 
-    def forward(self, x):
+    def construct(self, x):
         identity = x
 
         out = self.conv1(x)
@@ -56,7 +70,7 @@ class SEBasicBlock(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
 
-        # 🔥 在残差连接之前，先过注意力模块
+        # 应用注意力
         out = self.se(out)
 
         if self.downsample is not None:
@@ -67,25 +81,21 @@ class SEBasicBlock(nn.Module):
 
         return out
 
-# 3. 定义主网络结构 (SE-ResNet18)
-# 3. SEResNet (支持动态层数，兼容搜索脚本)
-class SEResNet(nn.Module):
-    def __init__(self, block, layers, num_classes=7, zero_init_residual=False,
-                 groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None, hidden_layers=None): 
+# 3. 定义主网络结构 (SEResNet)
+class SEResNet(nn.Cell):
+    def __init__(self, block, layers, num_classes=7, hidden_layers=None): 
         super(SEResNet, self).__init__()
-        if norm_layer is None:
-            norm_layer = nn.BatchNorm2d
-        self._norm_layer = norm_layer
-
+        self._norm_layer = nn.BatchNorm2d
         self.inplanes = 64
-        self.dilation = 1
         
         # --- 骨干网络 ---
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
-        self.bn1 = norm_layer(self.inplanes)
-        self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        # 注意：padding=3 且 pad_mode='pad' 才能对齐 PyTorch
+        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, 
+                               pad_mode='pad', padding=3, has_bias=False)
+        self.bn1 = self._norm_layer(self.inplanes)
+        self.relu = nn.ReLU()
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same')
+        
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
@@ -95,51 +105,58 @@ class SEResNet(nn.Module):
         
         # --- 动态分类头 ---
         input_features = 512 * block.expansion
-        
         if hidden_layers is None:
             hidden_layers = [] 
             
         layers_list = []
         current_dim = input_features
         
-        # 如果 hidden_layers 为空，这个循环不执行，直接接最后一层 Linear
-        # 这就等同于原始的单层结构
         for hidden_dim in hidden_layers:
-            layers_list.append(nn.Linear(current_dim, hidden_dim))
+            layers_list.append(nn.Dense(current_dim, hidden_dim))
             layers_list.append(nn.BatchNorm1d(hidden_dim))
-            layers_list.append(nn.ReLU(inplace=True))
+            layers_list.append(nn.ReLU())
             layers_list.append(nn.Dropout(p=0.5))
             current_dim = hidden_dim
             
-        # 最终输出层
-        layers_list.append(nn.Linear(current_dim, num_classes))
-        
-        self.fc = nn.Sequential(*layers_list)
+        layers_list.append(nn.Dense(current_dim, num_classes))
+        self.fc = nn.SequentialCell(layers_list)
 
         # 权重初始化
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+        self._init_weights()
 
-    def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
-        norm_layer = self._norm_layer
+    def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
-            downsample = nn.Sequential(
+            downsample = nn.SequentialCell([
                 conv1x1(self.inplanes, planes * block.expansion, stride),
-                norm_layer(planes * block.expansion),
-            )
+                self._norm_layer(planes * block.expansion),
+            ])
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample, norm_layer=norm_layer))
+        layers.append(block(self.inplanes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
-            layers.append(block(self.inplanes, planes, norm_layer=norm_layer))
-        return nn.Sequential(*layers)
+            layers.append(block(self.inplanes, planes))
+        return nn.SequentialCell(layers)
 
-    def forward(self, x):
+    def _init_weights(self):
+        for _, m in self.cells_and_names():
+            if isinstance(m, nn.Conv2d):
+                # 必须显式指定 mode='fan_out' 以对齐 PyTorch ResNet
+                m.weight.set_data(ms.common.initializer.initializer(
+                    ms.common.initializer.HeNormal(negative_slope=0, mode='fan_out', nonlinearity='relu'), 
+                    m.weight.shape))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.gamma.set_data(ms.common.initializer.initializer(ms.common.initializer.Constant(1), m.gamma.shape))
+                m.beta.set_data(ms.common.initializer.initializer(ms.common.initializer.Constant(0), m.beta.shape))
+            elif isinstance(m, nn.Dense):
+                # 初始化的关键：给分类头一个较小的随机分布，防止预测值直接冲向某个类
+                m.weight.set_data(ms.common.initializer.initializer(
+                    ms.common.initializer.Normal(sigma=0.01), m.weight.shape))
+                if m.has_bias:
+                    m.bias.set_data(ms.common.initializer.initializer(
+                        ms.common.initializer.Constant(0), m.bias.shape))
+                    
+    def construct(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -149,14 +166,10 @@ class SEResNet(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
         x = self.avgpool(x)
-        x = torch.flatten(x, 1)
+        # torch.flatten(x, 1) 对应 ops.flatten
+        x = ops.flatten(x, start_dim=1)
         x = self.fc(x)
         return x
 
-# --- 工厂函数 ---
-
-# 只保留这一个，默认就是单层
 def se_resnet18(num_classes=7, **kwargs):
-    # kwargs 里可能会包含 hidden_layers (如果搜索脚本传进来的话)
-    # 如果没传，SEResNet 默认 hidden_layers=None，即单层
     return SEResNet(SEBasicBlock, [2, 2, 2, 2], num_classes=num_classes, **kwargs)

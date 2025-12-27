@@ -1,24 +1,26 @@
 # ==========================================
-# CBAM-ResNet18 配置文件
-# 基于：SE-ResNet18 配置
-# 区别：更换为带有 CBAM (Channel + Spatial Attention) 的模型
+# MindSpore SE-ResNet18 配置文件
+# 功能：7类手势识别，从头训练模式
+# 适配环境：Win11 + MindSpore 2.7.1 CPU
 # ==========================================
 
 # ---------- 1. 实验控制参数 ----------
-epochs: 100
-log_every: 9
-eval_every: 1
-test_every: 0
-experiment_name: CBAM_ResNet18_Attention
-work_dir: hagrid_v3/work_dir
+epochs: 100         # 从头训练需要较多轮次
+log_every: 9        # 每 9 个 batch 打印一次日志
+eval_every: 1       # 每个 epoch 进行一次验证
+test_every: 0       # 暂时不运行独立测试
+experiment_name: SE_ResNet18_Attention
+# 建议使用相对路径，由代码内部自动拼接为绝对路径
+work_dir: "hagrid_v3/work_dir"
 
 # ---------- 2. 早停策略 ---------------
 early_stopping:
-    epochs: 15
-    metric: 0.01
+    epochs: 15      # 15个epoch指标不提升则停止
+    metric: 0.01    # 提升阈值
 
-# --- 3. 数据集配置 (保持不变) ---
+# ---------- 3. 数据集配置 ----------
 dataset:
+    # 路径均为相对于项目根目录 (HAGRID/) 的路径
     annotations_train: "annotations_mini/train"
     annotations_val: "annotations_mini/val"
     annotations_test: "annotations_mini/test"
@@ -28,14 +30,15 @@ dataset:
     dataset_test: "dataset_mini/test"
 
     img_size: &img_size 224  
-
+    
+    # 根据 HaGRID 数据集统计的均值和标准差
     img_mean: &img_mean [0.54, 0.499, 0.474]
     img_std: &img_std [0.234, 0.235, 0.231]
 
-    subset: -1
+    subset: -1       # -1 表示使用全部数据，调试时可设为 100
     one_class: False
 
-    # 你的 7 个类别
+    # 你的 7 个类别列表（顺序必须固定）
     targets:
         - call
         - ok
@@ -45,33 +48,29 @@ dataset:
         - holy
         - hand_heart
 
-# --- 4. 预处理与增强管道 ---
+# ---------- 4. 预处理与增强管道 (Albumentations) ----------
 train_transforms:
     HorizontalFlip:
         p: 0.5
-
     ShiftScaleRotate:
-        shift_limit: 0.05
+        shift_limit: 0.1
         scale_limit: 0.1
-        rotate_limit: 5
+        rotate_limit: 20
         border_mode: 0
-        value: [144,144,144]
+        value: [144, 144, 144]
         p: 0.5
-
     RandomBrightnessContrast:
         p: 0.3
-
     GaussNoise:
         var_limit: [10.0, 50.0]
         p: 0.2
-
     LongestMaxSize:      
         max_size: *img_size
         p: 1
     PadIfNeeded:
         min_height: *img_size
         min_width: *img_size
-        value: [144,144,144]
+        value: [144, 144, 144]
         border_mode: 0
         p: 1
     Normalize:
@@ -87,7 +86,7 @@ val_transforms:
     PadIfNeeded:
         min_height: *img_size
         min_width: *img_size
-        value: [144,144,144]
+        value: [144, 144, 144]
         border_mode: 0
         p: 1
     Normalize:
@@ -103,7 +102,7 @@ test_transforms:
     PadIfNeeded:
         min_height: *img_size
         min_width: *img_size
-        value: [144,144,144]
+        value: [144, 144, 144]
         border_mode: 0
         p: 1
     Normalize:
@@ -112,45 +111,44 @@ test_transforms:
         max_pixel_value: 255.0
         p: 1
 
-# --- 5. 模型参数 (🔥 关键修改) ---
+# ---------- 5. 模型参数 ----------
 model:
-    name: CBAM_ResNet18      # ✅ 使用新注册的 CBAM 模型
-    pretrained: False        # ✅ 必须为 False
+    name: SE_ResNet18        
+    pretrained: False        
     pretrained_backbone: False
-    checkpoint: E:\python\hagrid\hagrid_v3\work_dir\CBAM_ResNet18_Attention\CBAM_ResNet18_epoch-29_F1Score-0.78_loss-0.44.pth
-
-# --- 6. 优化器 ---
+    # 放入需要测试的模型权重文件路径
+    checkpoint: hagrid_v3\work_dir\SE_ResNet18_Attention\SE_ResNet18_epoch-77_F1Score-0.65_loss-0.17.ckpt
+# ---------- 6. 优化器 (适配 MindSpore AdamWeightDecay) ----------
 optimizer:
-    name: AdamW
+    name: AdamW              # 代码会自动映射到 ms.nn.AdamWeightDecay
     params:
-        lr: 0.001
+        # 注意：MindSpore 的参数名是 learning_rate 而不是 lr
+        learning_rate: 0.0001 
         weight_decay: 0.01
 
-# --- 7. 调度器 ---
+# ---------- 7. 调度器 ----------
 scheduler:
-    name: ReduceLROnPlateau
+    name: ReduceLROnPlateau  # 接口保留，CPU版逻辑在 Trainer 中手动管理
     params:
         mode: min
         factor: 0.5
         patience: 5
 
-criterion: CrossEntropyLoss
+# ---------- 8. 损失函数 ----------
+criterion: CrossEntropyLoss   # 代码映射到 ms.nn.SoftmaxCrossEntropyWithLogits
 
-# --- 8. 数据加载参数 ---
+# ---------- 9. 运行参数 ----------
 train_params:
-    num_workers: 0
+    num_workers: 0           # Windows 环境建议设为 0 或较小值
     shuffle: True
-    batch_size: 32
-    prefetch_factor: null
+    batch_size: 64
 
 test_params:
     num_workers: 0
     shuffle: False
-    batch_size: 32
-    prefetch_factor: null
+    batch_size: 64
 
 val_params:
     num_workers: 0
     shuffle: True
-    batch_size: 32
-    prefetch_factor: null
+    batch_size: 64
